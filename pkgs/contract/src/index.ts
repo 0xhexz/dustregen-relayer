@@ -1,5 +1,6 @@
 // Contract exports and utilities
-export * from './DustRegenRelayer.compact';
+// Note: DustRegenRelayer.compact is compiled separately by the Compact toolchain.
+// The compiled bindings are in src/managed/test-call/contract/
 
 // Contract interface types
 export interface RelayerConfig {

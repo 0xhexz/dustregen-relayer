@@ -49,7 +49,7 @@ are needed.
       indexerWsUrl, proofServerUrl, contractAddress, sponsorSeed,
       privateStateDir, walletSyncTimeoutMs, relayerPort, additionalFeeOverhead)
     - Export `loadNetworkConfig(env = process.env): NetworkConfig`
-    - Reject when `networkId !== 'Preview'`, when any URL fails `new URL()`,
+    - Reject when `networkId !== 'PreProd'`, when any URL fails `new URL()`,
       when `SPONSOR_SEED` is missing, or when `contractAddress` does not match
       the Midnight contract address shape; throw `ConfigurationError`
     - Apply defaults: `walletSyncTimeoutMs = 120_000`, `relayerPort = 3000`,
@@ -278,12 +278,12 @@ are needed.
       producing an `UnbalancedTransaction`, (4) `serializeUnbalanced` and
       `POST /sponsor` (use `node:fetch` or `axios`), (5)
       `signBalancedTx(user.wallet, response.balancedTx)`, (6) submit signed tx
-      to the Preview node
+      to the PreProd node
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
 
   - [ ] 6.2 Implement finalization polling and DUST fee print
     - File: `pkgs/cli/src/simulator/flow.ts` (extend 6.1)
-    - Poll the Preview node for the submitted txId until finalization (with
+    - Poll the PreProd node for the submitted txId until finalization (with
       configurable interval and timeout), retrieve the receipt, and print
       `feePaid` in DUST as Specks divided by `SPECKS_PER_DUST` with full
       precision (use the constant from 4.4)
@@ -320,10 +320,10 @@ are needed.
     - Wire `npm test` and `npm test --workspaces` to run all property and unit
       specs across the monorepo
 
-  - [ ]* 8.2 Implement Preview integration test gated by env flag
-    - File: `pkgs/cli/src/__tests__/e2e/preview.int.spec.ts`
-    - Skip when `RUN_PREVIEW_E2E !== '1'`; otherwise execute the full
-      simulator flow against the live Preview node, indexer, and proof server,
+  - [ ]* 8.2 Implement PreProd integration test gated by env flag
+    - File: `pkgs/cli/src/__tests__/e2e/preprod.int.spec.ts`
+    - Skip when `RUN_PREPROD_E2E !== '1'`; otherwise execute the full
+      simulator flow against the live PreProd node, indexer, and proof server,
       assert finalization and that the receipt's DUST fee is non-zero and not
       greater than `expectedFee + additionalFeeOverhead`
     - _Requirements: 1.1, 4.1, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8_
@@ -332,12 +332,12 @@ are needed.
 
   - [ ] 9.1 Author `.env.example`
     - File: `.env.example` (workspace root)
-    - Variables: `NETWORK_ID=Preview`, `NODE_RPC_URL`, `INDEXER_URL`,
+    - Variables: `NETWORK_ID=PreProd`, `NODE_RPC_URL`, `INDEXER_URL`,
       `INDEXER_WS_URL`, `PROOF_SERVER_URL`, `CONTRACT_ADDRESS`,
       `SPONSOR_SEED` (placeholder, never a real seed),
       `PRIVATE_STATE_DIR=./.sponsor-state`, `WALLET_SYNC_TIMEOUT_MS=120000`,
       `RELAYER_PORT=3000`, `ADDITIONAL_FEE_OVERHEAD=1000`,
-      `RUN_PREVIEW_E2E=0`
+      `RUN_PREPROD_E2E=0`
     - _Requirements: 3.1, 12.1, 12.2, 12.3_
 
   - [ ] 9.2 Update `README.md` with setup, run, and simulate instructions
@@ -345,11 +345,11 @@ are needed.
     - Sections: Prerequisites (Node ≥ 18, `compactc 0.31.0`), Install,
       Configure (.env), Build, Run relayer (`npm run dev relayer`), Run
       simulator (`npm run dev simulate`), Test (`npm test`,
-      `RUN_PREVIEW_E2E=1 npm test -w pkgs/cli`), Architecture diagram link
+      `RUN_PREPROD_E2E=1 npm test -w pkgs/cli`), Architecture diagram link
 
-  - [ ] 9.3 Author Preview deploy notes
-    - File: `docs/deploy-preview.md`
-    - Cover: minting cNIGHT for the sponsor on Preview, deploying
+  - [ ] 9.3 Author PreProd deploy notes
+    - File: `docs/deploy-preprod.md`
+    - Cover: minting cNIGHT for the sponsor on PreProd, deploying
       `test-call.compact` and recording `CONTRACT_ADDRESS`, sizing the sponsor
       DUST capacity (5 DUST per NIGHT), restart procedure preserving the
       LevelDB private state at `./.sponsor-state`, and a low-DUST runbook

@@ -11,9 +11,7 @@
     "lint": "eslint src/**/*.ts",
     "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
   },
-  "dependencies": {
-    "@midnight-ntwrk/compact-runtime": "0.16.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "^20.0.0",

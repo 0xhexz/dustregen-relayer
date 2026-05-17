@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  relayer:
+    build: .
+    env_file: .env
+    ports:
+      - "${RELAYER_PORT:-3000}:3000"
+    volumes:
+      - sponsor_private_state:/app/db
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - PRIVATE_STATE_DIR=/app/db
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+volumes:
+  sponsor_private_state:
+  redis_data:
