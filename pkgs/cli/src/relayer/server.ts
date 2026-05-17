@@ -5,7 +5,7 @@ import { createSponsorRouter } from './routes/sponsor';
 import { errorMiddleware } from './middleware';
 import { createIpRateLimiter, createAddressRateLimiter } from './rateLimit';
 import { SponsorWallet } from '../wallet/sponsor';
-import { ISponsorMutex } from '../queue/mutex';
+import { ISponsorMutex, IPoolAllocator } from '../queue/mutex';
 import { DustMonitor } from '../monitor/dust';
 import { NetworkConfig } from '../config/network';
 import { RelayerMetrics } from './metrics';
@@ -17,6 +17,7 @@ export function createRelayerApp(
   sponsor: SponsorWallet,
   mutex: ISponsorMutex,
   monitor: DustMonitor,
+  poolAllocator?: IPoolAllocator,
 ): Express {
   const app = express();
 
@@ -56,7 +57,7 @@ export function createRelayerApp(
   app.post('/sponsor', createAddressRateLimiter());
 
   // Sponsor route
-  app.use(createSponsorRouter(cfg, sponsor, mutex, metrics, monitor));
+  app.use(createSponsorRouter(cfg, sponsor, mutex, metrics, monitor, poolAllocator));
 
   // Error middleware (must be last)
   app.use(errorMiddleware);

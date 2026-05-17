@@ -7,6 +7,16 @@ export interface ISponsorMutex {
   readonly pending: number;
 }
 
+export interface UtxoAllocation {
+  utxoId: string;
+  amount: bigint;
+}
+
+export interface IPoolAllocator {
+  acquireUtxo(requestId: string): Promise<UtxoAllocation>;
+  releaseUtxo(requestId: string): Promise<void>;
+}
+
 export class SponsorMutex implements ISponsorMutex {
   private readonly mutex = new Mutex();
   private _pending = 0;

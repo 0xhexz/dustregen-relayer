@@ -3,6 +3,9 @@ import { Command } from 'commander';
 import { loadNetworkConfig } from './config/network';
 import { buildSponsorWallet } from './wallet/sponsor';
 import { createSponsorMutex } from './queue/mutex';
+import { DustUtxoPool, UTXO_SPLIT_AMOUNT, REPLENISH_COUNT } from './wallet/utxo-pool';
+import { DustUtxoSplitter } from './wallet/utxo-splitter';
+import { PoolAllocator } from './queue/pool-allocator';
 import { DustMonitor } from './monitor/dust';
 import { createRelayerApp } from './relayer/server';
 import { runSimulatorFlow } from './simulator/flow';
@@ -42,10 +45,35 @@ async function startRelayer(): Promise<void> {
     );
     monitor.start();
 
-    const app = createRelayerApp(cfg, sponsor, mutex, monitor);
-    app.listen(cfg.relayerPort, () => {
+    // Set up UTXO pool for parallel sponsor processing
+    const utxoPool = new DustUtxoPool(async () => {
+      // In production, this would execute a self-spend splitting transaction
+      const utxos = [];
+      for (let i = 0; i < REPLENISH_COUNT; i++) {
+        utxos.push({ utxoId: `utxo-${Date.now()}-${i}`, amount: UTXO_SPLIT_AMOUNT });
+      }
+      return utxos;
+    });
+
+    const splitter = new DustUtxoSplitter(utxoPool, 30_000, logger);
+    splitter.start();
+
+    const poolAllocator = new PoolAllocator(utxoPool, logger);
+
+    const app = createRelayerApp(cfg, sponsor, mutex, monitor, poolAllocator);
+    const server = app.listen(cfg.relayerPort, () => {
       logger.info(`Relayer listening on port ${cfg.relayerPort}`);
     });
+
+    // Graceful shutdown
+    const shutdown = () => {
+      logger.info('Shutting down relayer...');
+      splitter.stop();
+      monitor.stop();
+      server.close();
+    };
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
   } catch (err) {
     logger.error('Failed to start relayer', { error: (err as Error).message });
     process.exit(1);

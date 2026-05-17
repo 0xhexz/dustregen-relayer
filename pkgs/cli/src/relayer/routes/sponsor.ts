@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { firstValueFrom } from 'rxjs';
 import { deserializeUnbalanced, serializeBalanced } from '../../transaction/codec';
 import { waitForWalletSync, verifyDustRegistration, SponsorWallet } from '../../wallet/sponsor';
-import { ISponsorMutex } from '../../queue/mutex';
+import { ISponsorMutex, IPoolAllocator } from '../../queue/mutex';
 import { TransactionParseError, InsufficientDUSTBalanceError, InsufficientFeeError, BalanceError, InvalidContractError } from '../../errors';
 import { NetworkConfig } from '../../config/network';
 import { isContractWhitelisted } from '../../config/registry';
@@ -26,11 +26,13 @@ export function createSponsorRouter(
   mutex: ISponsorMutex,
   metrics: RelayerMetrics,
   monitor: DustMonitor,
+  poolAllocator?: IPoolAllocator,
 ): Router {
   const router = Router();
 
   router.post('/sponsor', async (req: Request, res: Response, next: NextFunction) => {
     monitor.recordRequest();
+    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     try {
       // Validate request body
       const parsed = SponsorRequestSchema.safeParse(req.body);
@@ -49,8 +51,8 @@ export function createSponsorRouter(
       // Wait for wallet sync
       await waitForWalletSync(sponsor.wallet, cfg.walletSyncTimeoutMs);
 
-      // Run exclusively through the mutex
-      const result = await mutex.runExclusive('sponsor', async () => {
+      // Use pool allocator if available, otherwise fall back to mutex
+      const sponsorFn = async () => {
         // Get current wallet state and verify DUST
         const state = await firstValueFrom(sponsor.wallet.state());
 
@@ -102,7 +104,19 @@ export function createSponsorRouter(
             { cause: (e as Error).message }
           );
         }
-      });
+      };
+
+      let result;
+      if (poolAllocator) {
+        const allocation = await poolAllocator.acquireUtxo(requestId);
+        try {
+          result = await sponsorFn();
+        } finally {
+          await poolAllocator.releaseUtxo(requestId);
+        }
+      } else {
+        result = await mutex.runExclusive('sponsor', sponsorFn);
+      }
 
       metrics.totalSponsored++;
       res.json(result);

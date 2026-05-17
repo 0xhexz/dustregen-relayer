@@ -6,7 +6,8 @@ export type ErrorCode =
   | 'BalanceError'
   | 'NetworkSubmissionError'
   | 'ConfigurationError'
-  | 'InvalidContractError';
+  | 'InvalidContractError'
+  | 'PoolExhaustedError';
 
 export abstract class RelayerError extends Error {
   abstract readonly code: ErrorCode;
