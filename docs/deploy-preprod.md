@@ -1,14 +1,14 @@
-# Deploying to Midnight Preview Testnet
+# Deploying to Midnight Pre-Production (PreProd) Testnet
 
-This guide covers deploying and operating the DustRegen Relayer on the Midnight Preview testnet.
+This guide covers deploying and operating the DustRegen Relayer on the Midnight PreProd testnet.
 
 ## Minting cNIGHT for the Sponsor
 
 The sponsor wallet needs NIGHT tokens to generate DUST for gas sponsorship.
 
 1. Install the Midnight Lace wallet browser extension.
-2. Create or import a wallet and switch to the Preview network.
-3. Use the Preview faucet to request testnet NIGHT tokens:
+2. Create or import a wallet and switch to the PreProd network.
+3. Use the PreProd faucet to request testnet NIGHT tokens:
    - Navigate to the Midnight Discord or documentation portal for the current faucet URL.
    - Request tokens to your sponsor wallet's native address.
 4. Confirm receipt by checking your wallet balance in Lace or via the indexer.
@@ -24,7 +24,7 @@ The `test-call.compact` contract is already compiled under `pkgs/contract/src/ma
 
 ```bash
 # Example using the Midnight deployment tooling
-midnight deploy --contract pkgs/contract/src/managed/test-call/ --network preview
+midnight deploy --contract pkgs/contract/src/managed/test-call/ --network preprod
 ```
 
 3. Record the returned contract address (a 64-character hex string).

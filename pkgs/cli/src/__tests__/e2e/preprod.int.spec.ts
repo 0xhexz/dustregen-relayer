@@ -2,18 +2,18 @@ import { runSimulatorFlow } from '../../simulator/flow';
 import { loadNetworkConfig, NetworkConfig } from '../../config/network';
 import { SPECKS_PER_DUST } from '../../monitor/dust';
 
-const RUN_PREVIEW_E2E = process.env.RUN_PREVIEW_E2E === '1';
+const RUN_PREPROD_E2E = process.env.RUN_PREPROD_E2E === '1';
 
-const describeOrSkip = RUN_PREVIEW_E2E ? describe : describe.skip;
+const describeOrSkip = RUN_PREPROD_E2E ? describe : describe.skip;
 
-describeOrSkip('Preview E2E Integration', () => {
+describeOrSkip('PreProd E2E Integration', () => {
   let cfg: NetworkConfig;
 
   beforeAll(() => {
     cfg = loadNetworkConfig();
   });
 
-  test('full simulator flow against live Preview node finalizes with non-zero DUST fee', async () => {
+  test('full simulator flow against live PreProd node finalizes with non-zero DUST fee', async () => {
     await runSimulatorFlow(cfg);
   }, 180000);
 

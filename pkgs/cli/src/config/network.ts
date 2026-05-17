@@ -1,7 +1,7 @@
 import { ConfigurationError } from '../errors.js';
 
 export interface NetworkConfig {
-  readonly networkId: 'Preview';
+  readonly networkId: 'PreProd';
   readonly nodeRpcUrl: string;
   readonly indexerUrl: string;
   readonly indexerWsUrl: string;
@@ -34,9 +34,9 @@ function validateUrl(value: string, key: string): string {
 }
 
 export function loadNetworkConfig(env: Record<string, string | undefined> = process.env): NetworkConfig {
-  const networkId = env['NETWORK_ID'] || 'Preview';
-  if (networkId !== 'Preview') {
-    throw new ConfigurationError(`Unsupported NETWORK_ID: ${networkId}. Only 'Preview' is supported.`);
+  const networkId = env['NETWORK_ID'] || 'PreProd';
+  if (networkId !== 'PreProd') {
+    throw new ConfigurationError(`Unsupported NETWORK_ID: ${networkId}. Only 'PreProd' is supported.`);
   }
 
   const nodeRpcUrl = validateUrl(requireEnv(env, 'NODE_RPC_URL', 'Node RPC endpoint'), 'NODE_RPC_URL');
@@ -86,7 +86,7 @@ export function loadNetworkConfig(env: Record<string, string | undefined> = proc
   }
 
   return {
-    networkId: 'Preview',
+    networkId: 'PreProd',
     nodeRpcUrl,
     indexerUrl,
     indexerWsUrl,

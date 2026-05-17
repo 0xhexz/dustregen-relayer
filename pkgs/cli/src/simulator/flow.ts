@@ -17,7 +17,7 @@ const DEFAULT_POLL_INTERVAL_MS = 2000;
 const DEFAULT_POLL_TIMEOUT_MS = 120000;
 
 /**
- * Poll the Preview node for transaction finalization.
+ * Poll the PreProd node for transaction finalization.
  * Returns the receipt once finalized.
  */
 export async function pollForFinalization(

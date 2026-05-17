@@ -26,7 +26,7 @@ export function createRelayerApp(
       status: 'healthy',
       service: 'dustregen-relayer',
       timestamp: new Date().toISOString(),
-      network: 'midnight-preview',
+      network: 'midnight-preprod',
       pending: mutex.pending,
       dust: snapshot ? {
         dustSpecks: snapshot.dustSpecks.toString(),

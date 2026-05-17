@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The DustRegen Relayer is a CLI-based production-grade Sponsored Gas Relayer for the Midnight Network (Preview). It enables users with zero DUST balance (unfunded wallets) to submit contract calls and token transfers by utilizing the DUST gas capacity of a Sponsor Wallet holding NIGHT tokens. The system implements the Midnight "battery model" where NIGHT tokens continuously generate DUST for transaction fees.
+The DustRegen Relayer is a CLI-based production-grade Sponsored Gas Relayer for the Midnight Network (PreProd). It enables users with zero DUST balance (unfunded wallets) to submit contract calls and token transfers by utilizing the DUST gas capacity of a Sponsor Wallet holding NIGHT tokens. The system implements the Midnight "battery model" where NIGHT tokens continuously generate DUST for transaction fees.
 
 ## Glossary
 
@@ -53,7 +53,7 @@ The DustRegen Relayer is a CLI-based production-grade Sponsored Gas Relayer for 
 
 1. THE Sponsor_Service SHALL load the Sponsor_Wallet seed phrase from a .env file
 2. THE Sponsor_Service SHALL initialize the Sponsor_Wallet using LevelDB for private state persistence
-3. WHEN initialized, THE Sponsor_Wallet SHALL connect to the Midnight Preview network
+3. WHEN initialized, THE Sponsor_Wallet SHALL connect to the Midnight PreProd network
 4. THE Sponsor_Service SHALL log the Sponsor_Wallet's native address and DUST balance on startup
 
 ### Requirement 4: Sponsor Service API
@@ -113,7 +113,7 @@ The DustRegen Relayer is a CLI-based production-grade Sponsored Gas Relayer for 
 3. THE CLI_Simulator SHALL construct a transaction calling incrementCounter() on the deployed test contract
 4. THE CLI_Simulator SHALL serialize the Unbalanced_Transaction and POST to the Sponsor_Service /sponsor endpoint
 5. THE CLI_Simulator SHALL receive the Balanced_Transaction and sign it with the User_Wallet private key
-6. THE CLI_Simulator SHALL submit the finalized transaction to the Midnight Preview node
+6. THE CLI_Simulator SHALL submit the finalized transaction to the Midnight PreProd node
 7. THE CLI_Simulator SHALL monitor block progression until transaction finalization
 8. WHEN finalized, THE CLI_Simulator SHALL display the paid fees in DUST
 
@@ -157,7 +157,7 @@ The DustRegen Relayer is a CLI-based production-grade Sponsored Gas Relayer for 
 
 #### Acceptance Criteria
 
-1. THE System SHALL support configuration for Midnight Preview network
+1. THE System SHALL support configuration for Midnight PreProd network
 2. THE System SHALL allow configuration of indexer URL and node endpoint
 3. THE System SHALL allow configuration of the deployed test contract address
 4. WHERE network configuration is invalid, THE System SHALL return a ConfigurationError on startup

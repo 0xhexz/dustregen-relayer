@@ -3,11 +3,11 @@
 ## Overview
 
 The DustRegen Relayer is a CLI-driven, sponsored gas relayer for the Midnight
-Network Preview testnet. Its purpose is to let an unfunded user wallet (zero
+Network Pre-Production (PreProd) testnet. Its purpose is to let an unfunded user wallet (zero
 NIGHT, zero DUST) execute a contract call against a deployed Compact contract
 by having a persistent **Sponsor Wallet** inject DUST inputs into the user's
 unbalanced transaction. The user signs the resulting balanced transaction
-locally, never surrendering custody, and submits it to a Preview node.
+locally, never surrendering custody, and submits it to a PreProd node.
 
 The system is structured as a TypeScript monorepo with two workspaces:
 
@@ -56,10 +56,10 @@ flowchart LR
     Monitor["DUST monitor<br/>(RxJS interval)"]
   end
 
-  subgraph Network["Midnight Preview"]
-    Node["Node RPC<br/>rpc.preview.midnight.network"]
-    Indexer["Indexer<br/>indexer.preview.midnight.network/api/v4/graphql"]
-    Proof["Proof Server<br/>lace-proof-pub.preview.midnight.network"]
+  subgraph Network["Midnight PreProd"]
+    Node["Node RPC<br/>rpc.preprod.midnight.network"]
+    Indexer["Indexer<br/>indexer.preprod.midnight.network/api/v4/graphql"]
+    Proof["Proof Server<br/>lace-proof-pub.preprod.midnight.network"]
   end
 
   SimEntry --> UserWallet
@@ -83,7 +83,7 @@ sequenceDiagram
   participant Q as Mutex Queue
   participant SW as Sponsor Wallet
   participant PS as Proof Server
-  participant N as Preview Node
+  participant N as PreProd Node
 
   Sim->>UW: build unbalanced tx for incrementCounter()
   UW-->>Sim: serialized hex (no DUST inputs)
@@ -162,16 +162,16 @@ pkgs/cli/src/
 
 ### config/network.ts
 
-Loads, validates, and exposes the Preview network configuration. Validation
+Loads, validates, and exposes the PreProd network configuration. Validation
 runs once at startup; failure throws `ConfigurationError`.
 
 ```typescript
 export interface NetworkConfig {
-  readonly networkId: 'Preview';
-  readonly nodeRpcUrl: string;            // https://rpc.preview.midnight.network
-  readonly indexerUrl: string;            // https://indexer.preview.midnight.network/api/v4/graphql
-  readonly indexerWsUrl: string;          // wss://indexer.preview.midnight.network/api/v4/graphql/ws
-  readonly proofServerUrl: string;        // https://lace-proof-pub.preview.midnight.network
+  readonly networkId: 'PreProd';
+  readonly nodeRpcUrl: string;            // https://rpc.preprod.midnight.network
+  readonly indexerUrl: string;            // https://indexer.preprod.midnight.network/api/v4/graphql
+  readonly indexerWsUrl: string;          // wss://indexer.preprod.midnight.network/api/v4/graphql/ws
+  readonly proofServerUrl: string;        // https://lace-proof-pub.preprod.midnight.network
   readonly contractAddress: string;       // 0x… for the deployed test-call contract
   readonly sponsorSeed: string;           // BIP-39 mnemonic, redacted from logs
   readonly privateStateDir: string;       // LevelDB directory, e.g. ./.sponsor-state
@@ -183,7 +183,7 @@ export interface NetworkConfig {
 export function loadNetworkConfig(env = process.env): NetworkConfig;
 ```
 
-The loader rejects any config in which `networkId !== 'Preview'`, any URL that
+The loader rejects any config in which `networkId !== 'PreProd'`, any URL that
 fails `new URL()`, or any missing seed phrase. The seed phrase is read from
 `SPONSOR_SEED` and **never echoed**; the logger formatter strips fields whose
 key matches `/seed|mnemonic|private/i`.
@@ -386,7 +386,7 @@ The 6-step CLI flow, executed by `npm run dev simulate`:
    producing an `UnbalancedTransaction`.
 4. `serializeUnbalanced` and `POST /sponsor`.
 5. `signBalancedTx(user.wallet, response.balancedTx)`.
-6. Submit the signed tx to the Preview node, poll for finalization, log
+6. Submit the signed tx to the PreProd node, poll for finalization, log
    `feePaid` in DUST (Specks divided by 10^15 with full precision).
 
 ## Data Models
@@ -595,7 +595,7 @@ export abstract class RelayerError extends Error {
 | `InsufficientFeeError` | `InsufficientFeeError` | 402 | Sponsor's DUST covers overhead but not the estimated fee for this specific tx. | Reduce tx complexity or wait for regen. |
 | `TransactionParseError` | `TransactionParseError` | 400 | Request body is not hex, hex does not deserialize, or the deserialized tx fails structural checks. | Caller must fix the payload. |
 | `BalanceError` | `BalanceError` | 502 | `balanceUnsealedTransaction` itself throws (UTXO collision after lock, proof-server failure, etc.). Wraps the underlying error in `details`. | Retryable; the lock is released before the response. |
-| `NetworkSubmissionError` | `NetworkSubmissionError` | 502 | Submitting the signed tx to the Preview node fails. | Retryable. |
+| `NetworkSubmissionError` | `NetworkSubmissionError` | 502 | Submitting the signed tx to the PreProd node fails. | Retryable. |
 | `ConfigurationError` | `ConfigurationError` | n/a (startup) | Invalid `NetworkConfig` at boot. | Fix `.env` and restart. |
 
 ### Express Error Middleware
@@ -643,7 +643,7 @@ drains) is the test that proves this end-to-end.
    shrinking, and compatibility with Jest).
 3. **Component tests** — Express handlers exercised with `supertest` and a
    mocked sponsor wallet (no LevelDB, no proof server).
-4. **Integration tests** — one end-to-end run against the Preview testnet:
+4. **Integration tests** — one end-to-end run against the PreProd testnet:
    build user wallet → POST /sponsor → sign → submit → poll for finalization.
    Run on a manual CI lane, not on every commit.
 5. **Smoke tests** — toolchain (`compactc`), config loading, contract bindings
@@ -669,7 +669,7 @@ drains) is the test that proves this end-to-end.
   without a proof server.
 - `wallet.state()` is replaced with a `Subject<WalletState>` in property
   tests for Properties 2, 3, 8, 11.
-- The Preview node and indexer are *not* mocked for the integration test —
+- The PreProd node and indexer are *not* mocked for the integration test —
   the real endpoints are used.
 
 ### Test Layout
@@ -683,7 +683,7 @@ pkgs/cli/src/__tests__/
 ├── wallet/sync.spec.ts       # Property 2, 3, 11
 ├── relayer/sponsor.spec.ts   # Property 5, 6, 8, 10 (supertest + mocks)
 ├── simulator/flow.spec.ts    # EXAMPLE end-to-end with mocks
-└── e2e/preview.int.spec.ts   # INTEGRATION (gated by env flag)
+└── e2e/preprod.int.spec.ts   # INTEGRATION (gated by env flag)
 pkgs/contract/src/__tests__/
 └── increment.spec.ts         # Property 1 + SMOKE for 1.1, 1.2, 1.4
 ```
@@ -694,7 +694,7 @@ pkgs/contract/src/__tests__/
   test. The property-reflection step in the prework consolidated 12 properties
   out of 50+ acceptance criteria — duplicates are removed.
 - Toolchain checks (Req 1.1, 1.2, 1.4) are single SMOKE tests, not properties.
-- External service behavior (LevelDB, Preview node, proof server) is covered
+- External service behavior (LevelDB, PreProd node, proof server) is covered
   by the single integration lane, not by property tests.
 
 ### Acceptance Definition
@@ -702,7 +702,7 @@ pkgs/contract/src/__tests__/
 The relayer is considered correct when:
 - All 12 property tests pass with `numRuns ≥ 100`.
 - The full simulator flow (`npm run dev simulate`) completes a finalized
-  contract call against the deployed test contract on Preview, with the
+  contract call against the deployed test contract on PreProd, with the
   user wallet starting at zero NIGHT and zero DUST.
 - The DUST monitor logs a non-zero, decreasing-then-regenerating series
   during a sponsored run, and emits the low-balance warning when the

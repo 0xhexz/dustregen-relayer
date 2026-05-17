@@ -1,6 +1,6 @@
 # DustRegen Relayer
 
-A sponsored gas relayer for Midnight Network Preview testnet. It enables unfunded user wallets (zero NIGHT, zero DUST) to execute contract calls by having a persistent sponsor wallet inject DUST inputs into the user's unbalanced transaction. The user signs locally and never surrenders custody of their keys.
+A sponsored gas relayer for Midnight Network Pre-Production (PreProd) testnet. It enables unfunded user wallets (zero NIGHT, zero DUST) to execute contract calls by having a persistent sponsor wallet inject DUST inputs into the user's unbalanced transaction. The user signs locally and never surrenders custody of their keys.
 
 ## Prerequisites
 
@@ -90,7 +90,7 @@ Run the end-to-end simulator that exercises the full sponsorship flow:
 npm run dev simulate
 ```
 
-The simulator builds an ephemeral user wallet, constructs a contract call, posts to the relayer for DUST balancing, signs locally, and submits the finalized transaction to the Preview node.
+The simulator builds an ephemeral user wallet, constructs a contract call, posts to the relayer for DUST balancing, signs locally, and submits the finalized transaction to the PreProd node.
 
 ## Test
 
@@ -106,10 +106,10 @@ Run only the CLI workspace tests:
 npm test -w pkgs/cli
 ```
 
-Run integration tests against live Preview (requires configured `.env` with real credentials):
+Run integration tests against live PreProd (requires configured `.env` with real credentials):
 
 ```bash
-RUN_PREVIEW_E2E=1 npm test -w pkgs/cli
+RUN_PREPROD_E2E=1 npm test -w pkgs/cli
 ```
 
 ## Architecture

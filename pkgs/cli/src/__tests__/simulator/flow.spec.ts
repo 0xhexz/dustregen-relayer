@@ -43,7 +43,7 @@ function createMockSponsorWallet(): SponsorWallet {
 
 function createTestConfig(port: number = 0): NetworkConfig {
   return {
-    networkId: 'Preview',
+    networkId: 'PreProd',
     nodeRpcUrl: 'http://localhost:9944',
     indexerUrl: 'http://localhost:8080',
     indexerWsUrl: 'ws://localhost:8080',
