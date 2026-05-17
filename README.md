@@ -2,6 +2,26 @@
 
 A sponsored gas relayer for Midnight Network Pre-Production (PreProd) testnet. It enables unfunded user wallets (zero NIGHT, zero DUST) to execute contract calls by having a persistent sponsor wallet inject DUST inputs into the user's unbalanced transaction. The user signs locally and never surrenders custody of their keys.
 
+## Quick Start
+
+```bash
+# 1. Clone the repo
+git clone <repository-url>
+cd dustregen-relayer
+
+# 2. Install dependencies
+npm install
+
+# 3. Build all packages
+npm run build
+
+# 4. Register the CLI globally
+npm link -w pkgs/cli
+
+# 5. Run the interactive TUI
+dustregen
+```
+
 ## Prerequisites
 
 - Node.js >= 18
@@ -20,7 +40,7 @@ dustregen-relayer/
 │   │   └── package.json
 │   └── cli/                 # Express relayer service + CLI simulator
 │       ├── src/
-│       │   ├── index.ts         # Commander entry point (relayer | simulate)
+│       │   ├── index.ts         # Interactive TUI + Commander entry point
 │       │   ├── config/          # Network config, logger
 │       │   ├── wallet/          # Sponsor and ephemeral user wallet builders
 │       │   ├── transaction/     # Codec (serialize/deserialize), sign helpers
@@ -64,18 +84,56 @@ npm run build
 
 This compiles TypeScript in both `pkgs/contract` and `pkgs/cli`.
 
+## Global CLI Installation
+
+After building, register the `dustregen` command globally:
+
+```bash
+npm link -w pkgs/cli
+```
+
+This creates a global `dustregen` command that you can run from anywhere.
+
+## Usage
+
+### Interactive Mode (no arguments)
+
+Simply run:
+
+```bash
+dustregen
+```
+
+This opens an interactive menu with arrow-key navigation:
+- **Start Paymaster Relayer** - launches the Express server on the configured port
+- **Run 6-Step Gasless E2E Simulation** - runs the ephemeral wallet test flow with colorful spinners
+- **Exit** - quits the application
+
+### Direct Commands (scripted/non-interactive)
+
+For CI/CD pipelines or scripted usage, use the subcommands directly:
+
+```bash
+# Start the relayer server
+dustregen relayer
+
+# Run the simulator flow
+dustregen simulate
+```
+
+Or without global install:
+
+```bash
+node pkgs/cli/dist/index.js relayer
+node pkgs/cli/dist/index.js simulate
+```
+
 ## Run Relayer
 
 Start the sponsored gas relayer service:
 
 ```bash
-npm run dev relayer
-```
-
-Or from the compiled output:
-
-```bash
-node pkgs/cli/dist/index.js relayer
+dustregen relayer
 ```
 
 The relayer listens on `RELAYER_PORT` (default 3000) and exposes:
@@ -87,10 +145,10 @@ The relayer listens on `RELAYER_PORT` (default 3000) and exposes:
 Run the end-to-end simulator that exercises the full sponsorship flow:
 
 ```bash
-npm run dev simulate
+dustregen simulate
 ```
 
-The simulator builds an ephemeral user wallet, constructs a contract call, posts to the relayer for DUST balancing, signs locally, and submits the finalized transaction to the PreProd node.
+The simulator builds an ephemeral user wallet, constructs a contract call, posts to the relayer for DUST balancing, signs locally, and submits the finalized transaction to the PreProd node. When running interactively, each step displays colorful spinner animations and status indicators.
 
 ## Test
 

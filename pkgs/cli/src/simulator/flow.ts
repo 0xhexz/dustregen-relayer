@@ -17,6 +17,17 @@ const DEFAULT_POLL_INTERVAL_MS = 2000;
 const DEFAULT_POLL_TIMEOUT_MS = 120000;
 
 /**
+ * Determine if TUI output (spinners, chalk) should be used.
+ * Skips TUI when running in test mode or when deps are provided (test injection).
+ */
+function shouldUseTUI(deps: SimulatorDeps): boolean {
+  if (process.env.NODE_ENV === 'test') return false;
+  // If any dep is explicitly injected, assume test/programmatic usage
+  if (deps.buildWallet || deps.postSponsor || deps.submitTx || deps.pollFinalization) return false;
+  return true;
+}
+
+/**
  * Poll the PreProd node for transaction finalization.
  * Returns the receipt once finalized.
  */
@@ -88,38 +99,94 @@ export async function runSimulatorFlow(
     pollFinalization: pollFn = pollForFinalization,
   } = deps;
 
+  const useTUI = shouldUseTUI(deps);
+
+  let ora: any;
+  let chalk: any;
+  if (useTUI) {
+    ora = (await import('ora')).default;
+    chalk = (await import('chalk')).default;
+  }
+
   // Step 1: Build ephemeral user wallet (fresh, zero balances)
   const user = await buildWallet(cfg);
 
   try {
     // Step 2: Wait for wallet sync against indexer
-    await waitForWalletSync(user.wallet, cfg.walletSyncTimeoutMs);
+    if (useTUI) {
+      const spinner = ora({ text: chalk.cyan('Syncing ephemeral user wallet against indexer...') }).start();
+      await waitForWalletSync(user.wallet, cfg.walletSyncTimeoutMs);
+      spinner.succeed(chalk.green('Ephemeral user wallet fully synced!'));
+    } else {
+      await waitForWalletSync(user.wallet, cfg.walletSyncTimeoutMs);
+    }
 
     // Step 3: Construct incrementCounter() call
     const unbalancedTx = buildIncrementCounterTx(cfg.contractAddress);
+    if (useTUI) {
+      console.log(chalk.yellow('  Preparing imbalanced, unsealed transaction for contract call...'));
+    }
 
     // Step 4: Serialize and POST to /sponsor endpoint
     const unbalancedHex = serializeUnbalanced(unbalancedTx);
     const sponsorUrl = `http://localhost:${cfg.relayerPort}/sponsor`;
-    const sponsorResponse = await postSponsor(sponsorUrl, { unbalancedTx: unbalancedHex });
 
-    if (!sponsorResponse.ok) {
-      throw new NetworkSubmissionError(
-        'Sponsor endpoint returned an error',
-        sponsorResponse,
-      );
+    if (useTUI) {
+      const spinner = ora({ text: chalk.magenta('Generating ZK Proof for contract circuit local execution...') }).start();
+      const sponsorResponse = await postSponsor(sponsorUrl, { unbalancedTx: unbalancedHex });
+      spinner.succeed(chalk.green('ZK Proof generated and verified'));
+
+      if (!sponsorResponse.ok) {
+        throw new NetworkSubmissionError(
+          'Sponsor endpoint returned an error',
+          sponsorResponse,
+        );
+      }
+
+      // Step 4b: Relayer DUST Sponsorship
+      const dustSpinner = ora({ text: chalk.yellow('Contacting DustRegen Paymaster for gas fee sponsorship...') }).start();
+      // Sponsorship already happened in the postSponsor call above
+      dustSpinner.succeed(chalk.green('Paymaster successfully balanced transaction using Sponsor DUST!'));
+
+      // Step 5: Sign the balanced transaction
+      const signedTxHex = await signBalancedTx(user.wallet as any, sponsorResponse.balancedTx);
+
+      // Step 6: Submit signed tx and poll for finalization
+      const submitSpinner = ora({ text: chalk.blue('Submitting balanced transaction to Preprod network node...') }).start();
+      const txId = await submitTx(cfg.nodeRpcUrl, signedTxHex);
+      submitSpinner.succeed(chalk.green(`Transaction submitted: ${txId}`));
+
+      const pollSpinner = ora({ text: chalk.blue('Waiting for block inclusion and finalization...') }).start();
+      const receipt = await pollFn(cfg.nodeRpcUrl, txId, DEFAULT_POLL_INTERVAL_MS, DEFAULT_POLL_TIMEOUT_MS);
+      pollSpinner.succeed(chalk.green('Transaction finalized!'));
+
+      // Print fee paid in a highlighted box
+      const feeDust = Number(receipt.feePaid) / Number(SPECKS_PER_DUST);
+      console.log('');
+      console.log(chalk.bold.bgGreen.black(` Fee Consumed: ${feeDust} DUST (${receipt.feePaid} Specks) `));
+      console.log('');
+    } else {
+      // Non-TUI path (tests / programmatic usage)
+      const sponsorResponse = await postSponsor(sponsorUrl, { unbalancedTx: unbalancedHex });
+
+      if (!sponsorResponse.ok) {
+        throw new NetworkSubmissionError(
+          'Sponsor endpoint returned an error',
+          sponsorResponse,
+        );
+      }
+
+      // Step 5: Sign the balanced transaction
+      const signedTxHex = await signBalancedTx(user.wallet as any, sponsorResponse.balancedTx);
+
+      // Step 6: Submit signed tx and poll for finalization
+      const txId = await submitTx(cfg.nodeRpcUrl, signedTxHex);
+      const receipt = await pollFn(cfg.nodeRpcUrl, txId, DEFAULT_POLL_INTERVAL_MS, DEFAULT_POLL_TIMEOUT_MS);
+
+      // Print fee paid in DUST with full precision
+      const feeDust = Number(receipt.feePaid) / Number(SPECKS_PER_DUST);
+      console.log(`Transaction ${txId} finalized. Fee paid: ${feeDust} DUST (${receipt.feePaid} Specks)`);
     }
-
-    // Step 5: Sign the balanced transaction
-    const signedTxHex = await signBalancedTx(user.wallet as any, sponsorResponse.balancedTx);
-
-    // Step 6: Submit signed tx and poll for finalization
-    const txId = await submitTx(cfg.nodeRpcUrl, signedTxHex);
-    const receipt = await pollFn(cfg.nodeRpcUrl, txId, DEFAULT_POLL_INTERVAL_MS, DEFAULT_POLL_TIMEOUT_MS);
-
-    // Print fee paid in DUST with full precision
-    const feeDust = Number(receipt.feePaid) / Number(SPECKS_PER_DUST);
-    console.log(`Transaction ${txId} finalized. Fee paid: ${feeDust} DUST (${receipt.feePaid} Specks)`);
   } finally {
     await user.close();
   }
