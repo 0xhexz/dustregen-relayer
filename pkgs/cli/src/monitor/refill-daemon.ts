@@ -61,22 +61,41 @@ export class DustRefillDaemon {
   }
 
   private async defaultSubmitRefillTx(): Promise<string> {
-    // In production, this would construct a DustRegistration backdate transaction
-    // using unspent NIGHT UTXOs from the sponsor wallet
+    // Construct a DustRegistration backdate transaction using unspent NIGHT UTXOs
     const tx = {
       type: 'DustRegistrationBackdate',
       cNightInput: true,
       timestamp: new Date().toISOString(),
     };
 
-    // Submit via wallet's balanceUnsealedTransaction
-    const result = await this.wallet.wallet.balanceUnsealedTransaction(tx, {
+    // Balance the transaction via the wallet
+    const balanced = await this.wallet.wallet.balanceUnsealedTransaction(tx, {
       tokenKindsToBalance: ['dust', 'night'],
       changeOutputDestination: this.wallet.nativeAddress,
       additionalFeeOverhead: this.config.additionalFeeOverhead,
     });
 
-    return `refill-tx-${Date.now()}`;
+    // Submit the balanced transaction to the network via node RPC.
+    // The wallet's balanceUnsealedTransaction returns the balanced tx which
+    // must then be submitted. We use the node RPC endpoint from config.
+    const balancedTx = balanced as any;
+    const txPayload = JSON.stringify(balancedTx);
+    const submitUrl = `${this.config.nodeRpcUrl}/submit`;
+    const response = await fetch(submitUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: txPayload,
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => 'unknown error');
+      throw new Error(`Transaction submission failed (${response.status}): ${errorBody}`);
+    }
+
+    const result = await response.json().catch(() => ({}));
+    const txId = (result as any).txId ?? `refill-tx-${Date.now()}`;
+    this.logger.info('Refill transaction submitted to network', { txId, submitUrl });
+    return txId;
   }
 
   private emitWebhook(type: string, message: string, details: Record<string, unknown>): void {

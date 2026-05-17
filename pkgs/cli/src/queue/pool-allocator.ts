@@ -1,5 +1,5 @@
 import { ISponsorMutex, IPoolAllocator, UtxoAllocation } from './mutex';
-import { DustUtxoPool } from '../wallet/utxo-pool';
+import { DustUtxoPool, PoolExhaustedError } from '../wallet/utxo-pool';
 
 export interface AllocatorLogger {
   info: (msg: string, data?: unknown) => void;
@@ -47,11 +47,22 @@ export class PoolAllocator implements ISponsorMutex, IPoolAllocator {
    * IPoolAllocator: acquire a UTXO allocation for a specific request.
    */
   async acquireUtxo(requestId: string): Promise<UtxoAllocation> {
-    const utxoRef = this.pool.acquire();
-    const allocation: UtxoAllocation = { utxoId: utxoRef.utxoId, amount: utxoRef.amount };
-    this.allocations.set(requestId, allocation);
-    this.logger.info('pool-allocator:acquireUtxo', { requestId, utxoId: utxoRef.utxoId });
-    return allocation;
+    try {
+      const utxoRef = this.pool.acquire();
+      const allocation: UtxoAllocation = { utxoId: utxoRef.utxoId, amount: utxoRef.amount };
+      this.allocations.set(requestId, allocation);
+      this.logger.info('pool-allocator:acquireUtxo', { requestId, utxoId: utxoRef.utxoId });
+      return allocation;
+    } catch (err) {
+      if (err instanceof PoolExhaustedError) {
+        // Re-throw with backpressure metadata (queue depth, retry hint)
+        throw new PoolExhaustedError(err.message, {
+          retryAfterSeconds: 5,
+          queueDepth: this._pending,
+        });
+      }
+      throw err;
+    }
   }
 
   /**

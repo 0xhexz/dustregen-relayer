@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import { loadNetworkConfig } from './config/network';
 import { loadSponsorKeyMaterial } from './config/key-loader';
 import { buildSponsorWallet } from './wallet/sponsor';
+import { fastSyncSponsorWallet } from './wallet/fast-sync';
 import { createSponsorMutex } from './queue/mutex';
 import { DustUtxoPool, UTXO_SPLIT_AMOUNT, REPLENISH_COUNT } from './wallet/utxo-pool';
 import { DustUtxoSplitter } from './wallet/utxo-splitter';
@@ -40,6 +41,18 @@ async function startRelayer(): Promise<void> {
   const seed = await loadSponsorKeyMaterial(cfg);
   const logger = createLogger('dustregen-relayer', [seed]);
   try {
+    // Fast-sync wallet state from indexer if enabled (parallel indexed queries
+    // instead of block-by-block scanning for rapid startup)
+    if (process.env.FAST_SYNC_ENABLED === 'true') {
+      logger.info('Fast-syncing sponsor wallet from indexer...');
+      const syncResult = await fastSyncSponsorWallet(cfg.indexerUrl, cfg.contractAddress);
+      logger.info('Fast-sync complete', {
+        syncedToBlock: syncResult.syncedToBlock.toString(),
+        nullifiers: syncResult.nullifiers.length,
+        allocations: syncResult.generatedAllocations.length,
+      });
+    }
+
     const sponsor = await buildSponsorWallet(cfg);
     const mutex = createSponsorMutex(logger, process.env.REDIS_URL);
     const monitor = new DustMonitor(

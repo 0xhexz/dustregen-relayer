@@ -183,8 +183,10 @@ export class DustMonitor {
           });
         }
 
-        // Attempt auto-refill if enabled
-        this.attemptAutoRefill(dustSpecks);
+        // Attempt auto-refill if enabled (catch unhandled rejections from the async call)
+        this.attemptAutoRefill(dustSpecks).catch((err) => {
+          this.logger.warn('Unhandled error in auto-refill attempt', { error: (err as Error).message });
+        });
       }
     });
   }

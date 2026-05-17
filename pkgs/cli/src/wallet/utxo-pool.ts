@@ -14,6 +14,19 @@ export interface UtxoRef {
 export class PoolExhaustedError extends RelayerError {
   readonly code = 'PoolExhaustedError' as const;
   readonly httpStatus = 503;
+  /** Suggested number of seconds the client should wait before retrying */
+  readonly retryAfterSeconds: number;
+  /** Current queue depth (number of pending requests) */
+  readonly queueDepth: number;
+
+  constructor(message: string, opts?: { retryAfterSeconds?: number; queueDepth?: number }) {
+    super(message, {
+      retryAfterSeconds: opts?.retryAfterSeconds ?? 5,
+      queueDepth: opts?.queueDepth ?? 0,
+    });
+    this.retryAfterSeconds = opts?.retryAfterSeconds ?? 5;
+    this.queueDepth = opts?.queueDepth ?? 0;
+  }
 }
 
 export type ReplenishFn = () => Promise<UtxoRef[]>;

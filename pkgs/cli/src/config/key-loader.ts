@@ -77,6 +77,14 @@ async function loadFromPassphrase(cfg: NetworkConfig): Promise<string> {
 }
 
 /**
+ * scrypt cost parameters for key derivation.
+ * N=131072 (2^17) provides approximately 1-2 second derivation time on modern
+ * hardware, making brute-force attacks against a stolen encrypted seed file
+ * significantly more expensive than Node's default N=16384.
+ */
+const SCRYPT_PARAMS = { N: 131072, r: 8, p: 1, maxmem: 256 * 1024 * 1024 };
+
+/**
  * Decrypt data that was encrypted with encryptSeedWithPassphrase.
  * Format: [16-byte salt][12-byte IV][16-byte auth tag][ciphertext]
  */
@@ -90,7 +98,7 @@ export function decryptWithPassphrase(encryptedData: Buffer, passphrase: string)
   const authTag = encryptedData.subarray(28, 44);
   const ciphertext = encryptedData.subarray(44);
 
-  const key = crypto.scryptSync(passphrase, salt, 32);
+  const key = crypto.scryptSync(passphrase, salt, 32, SCRYPT_PARAMS);
   const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
   decipher.setAuthTag(authTag);
 
@@ -101,11 +109,12 @@ export function decryptWithPassphrase(encryptedData: Buffer, passphrase: string)
 /**
  * Encrypt a seed with a passphrase using aes-256-gcm with scrypt key derivation.
  * Output format: [16-byte salt][12-byte IV][16-byte auth tag][ciphertext]
+ * Uses N=131072 (2^17) for scrypt to provide strong brute-force resistance.
  */
 export function encryptSeedWithPassphrase(seed: string, passphrase: string): Buffer {
   const salt = crypto.randomBytes(16);
   const iv = crypto.randomBytes(12);
-  const key = crypto.scryptSync(passphrase, salt, 32);
+  const key = crypto.scryptSync(passphrase, salt, 32, SCRYPT_PARAMS);
 
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
   const encrypted = Buffer.concat([cipher.update(seed, 'utf-8'), cipher.final()]);

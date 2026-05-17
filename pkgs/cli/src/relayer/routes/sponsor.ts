@@ -52,8 +52,11 @@ export function createSponsorRouter(
       // Wait for wallet sync
       await waitForWalletSync(sponsor.wallet, cfg.walletSyncTimeoutMs);
 
-      // Use pool allocator if available, otherwise fall back to mutex
-      const sponsorFn = async () => {
+      // Use pool allocator if available, otherwise fall back to mutex.
+      // When using the pool allocator, the allocated UTXO is threaded into
+      // balanceUnsealedTransaction as a pinnedInputs option to prevent concurrent
+      // requests from selecting the same on-chain UTXO.
+      const sponsorFn = async (allocation?: { utxoId: string; amount: bigint }) => {
         // Get current wallet state and verify DUST
         const state = await firstValueFrom(sponsor.wallet.state());
 
@@ -76,13 +79,17 @@ export function createSponsorRouter(
           feeSafetyMargin = cfg.additionalFeeOverhead;
         }
 
-        // Try to balance the transaction
+        // Try to balance the transaction, pinning the allocated UTXO if available
         try {
-          const balanced = await sponsor.wallet.balanceUnsealedTransaction(tx, {
+          const balanceOpts: Record<string, unknown> = {
             tokenKindsToBalance: ['dust'],
             changeOutputDestination: sponsor.publicKey,
             additionalFeeOverhead: feeSafetyMargin,
-          });
+          };
+          if (allocation) {
+            balanceOpts.pinnedInputs = [{ utxoId: allocation.utxoId, amount: allocation.amount }];
+          }
+          const balanced = await sponsor.wallet.balanceUnsealedTransaction(tx, balanceOpts as any);
 
           const balancedTx = balanced as any;
           const estimatedFee = balancedTx.estimatedFee ?? 0n;
@@ -120,12 +127,12 @@ export function createSponsorRouter(
       if (poolAllocator) {
         const allocation = await poolAllocator.acquireUtxo(requestId);
         try {
-          result = await sponsorFn();
+          result = await sponsorFn(allocation);
         } finally {
           await poolAllocator.releaseUtxo(requestId);
         }
       } else {
-        result = await mutex.runExclusive('sponsor', sponsorFn);
+        result = await mutex.runExclusive('sponsor', () => sponsorFn());
       }
 
       metrics.totalSponsored++;
