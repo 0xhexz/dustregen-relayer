@@ -15,6 +15,7 @@ module.exports = {
   // their actual files when ts-jest compiles spec files.
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^@midnight-ntwrk/compact-runtime$': '<rootDir>/src/__mocks__/@midnight-ntwrk/compact-runtime.js',
   },
   transform: {
     '^.+\\.tsx?$': [

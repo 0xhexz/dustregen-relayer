@@ -7,7 +7,7 @@
     "pkgs/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
+    "build": "npm run build -w pkgs/contract && npm run build -w pkgs/cli",
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces",
     "clean": "rm -rf node_modules && npm run clean --workspaces",

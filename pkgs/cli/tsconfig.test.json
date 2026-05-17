@@ -1,12 +1,6 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "target": "ES2022",
-    "esModuleInterop": true,
-    "allowJs": true,
-    "checkJs": false,
     "noEmit": true,
     "composite": false,
     "declaration": false,
@@ -16,6 +10,6 @@
     "types": ["node", "jest"],
     "typeRoots": ["../../node_modules/@types", "../../typings"]
   },
-  "include": ["src/**/*.ts", "src/managed/**/*.d.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
