@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Implement Task 4 (Webhook Alerts & DustMonitor Upgrades) and Task 5 (Visual Monitoring Dashboard). These are monitoring/observability features.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "TASK 4 - Webhook Alerts:",
     "Create pkgs/cli/src/monitor/webhooks.ts with an async function sendWebhookAlert(payload: WebhookPayload) that posts to SLACK_WEBHOOK_URL and DISCORD_WEBHOOK_URL env vars (if set). Use axios for HTTP posts. Before sending, redact any values matching seed/mnemonic/private key patterns (reuse the SENSITIVE_PATTERN regex from logger.ts). Format Slack payload as {text: message} and Discord as {content: message}.",
@@ -30,5 +30,5 @@
     "npm test -w pkgs/cli"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Moved RelayerMetrics interface to a separate metrics.ts file to avoid circular dependency between server.ts and routes/sponsor.ts. The .gitignore had a 'public' entry (Gatsby leftover) that required force-adding the dashboard file. All tests pass. The dashboard.html uses CDN links for Tailwind and Chart.js."
 }

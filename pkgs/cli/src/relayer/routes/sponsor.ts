@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { firstValueFrom } from 'rxjs';
 import { deserializeUnbalanced, serializeBalanced } from '../../transaction/codec';
 import { waitForWalletSync, verifyDustRegistration, SponsorWallet } from '../../wallet/sponsor';
-import { SponsorMutex, ISponsorMutex } from '../../queue/mutex';
+import { ISponsorMutex } from '../../queue/mutex';
 import { TransactionParseError, InsufficientDUSTBalanceError, InsufficientFeeError, BalanceError, InvalidContractError } from '../../errors';
 import { NetworkConfig } from '../../config/network';
 import { isContractWhitelisted } from '../../config/registry';

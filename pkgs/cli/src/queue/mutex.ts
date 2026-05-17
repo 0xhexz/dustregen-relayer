@@ -44,7 +44,7 @@ export class SponsorMutex implements ISponsorMutex {
 export class DistributedSponsorMutex implements ISponsorMutex {
   private readonly redlock: Redlock;
   private readonly lockKey = 'locks:sponsor:utxo-spend';
-  private readonly ttl = 5000;
+  private readonly ttl = 30000;
   private _pending = 0;
   private logger: { info: (msg: string, data?: unknown) => void };
 

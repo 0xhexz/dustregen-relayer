@@ -61,7 +61,7 @@ export async function sendWebhookAlert(payload: WebhookPayload): Promise<void> {
 
   if (slackUrl) {
     promises.push(
-      axios.post(slackUrl, { text: alertMessage }).then(() => {}).catch((err) => {
+      axios.post(slackUrl, { text: alertMessage, attachments: [{ text: JSON.stringify(redactedDetails) }] }).then(() => {}).catch((err) => {
         logger.warn('Failed to send Slack webhook', { error: (err as Error).message });
       })
     );
@@ -69,7 +69,7 @@ export async function sendWebhookAlert(payload: WebhookPayload): Promise<void> {
 
   if (discordUrl) {
     promises.push(
-      axios.post(discordUrl, { content: alertMessage }).then(() => {}).catch((err) => {
+      axios.post(discordUrl, { content: alertMessage + '\n```json\n' + JSON.stringify(redactedDetails, null, 2) + '\n```' }).then(() => {}).catch((err) => {
         logger.warn('Failed to send Discord webhook', { error: (err as Error).message });
       })
     );

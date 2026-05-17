@@ -30,9 +30,6 @@ export function createRelayerApp(
   app.use(cors());
   app.use(express.json());
 
-  // IP-based rate limiting (global)
-  app.use(createIpRateLimiter());
-
   // Health endpoint
   app.get('/health', (_req, res) => {
     const snapshot = monitor.current();
@@ -51,6 +48,9 @@ export function createRelayerApp(
       } : null,
     });
   });
+
+  // IP-based rate limiting on sponsor route
+  app.use('/sponsor', createIpRateLimiter());
 
   // Address-based rate limiting on sponsor route
   app.post('/sponsor', createAddressRateLimiter());

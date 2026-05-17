@@ -81,6 +81,23 @@ export class DustMonitor {
     this.subscription = interval(intervalMs).pipe(
       map(() => this.getWalletState()),
     ).subscribe(state => {
+      // Prune request timestamps older than 5 minutes
+      const cutoff = Date.now() - REQUEST_WINDOW_MS;
+      this.requestTimestamps = this.requestTimestamps.filter(ts => ts > cutoff);
+
+      // Check for request spike (runs regardless of wallet state)
+      if (this.requestTimestamps.length > REQUEST_SPIKE_THRESHOLD) {
+        if (this.canSendAlert('request_spike')) {
+          this.markAlertSent('request_spike');
+          sendWebhookAlert({
+            type: 'request_spike',
+            message: `Request spike detected: ${this.requestTimestamps.length} requests in last 5 minutes`,
+            details: { requestCount: this.requestTimestamps.length, windowMs: REQUEST_WINDOW_MS },
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+
       if (!state) return;
       const { nightStars, dustSpecks } = state;
       const capacity = computeDustCapacity(nightStars);
@@ -100,23 +117,6 @@ export class DustMonitor {
             type: 'low_dust',
             message: `DUST balance is below threshold: ${dustSpecks.toString()} specks`,
             details: { dustSpecks: dustSpecks.toString(), threshold: LOW_DUST_THRESHOLD_SPECKS.toString() },
-            timestamp: new Date().toISOString(),
-          });
-        }
-      }
-
-      // Prune request timestamps older than 5 minutes
-      const cutoff = Date.now() - REQUEST_WINDOW_MS;
-      this.requestTimestamps = this.requestTimestamps.filter(ts => ts > cutoff);
-
-      // Check for request spike
-      if (this.requestTimestamps.length > REQUEST_SPIKE_THRESHOLD) {
-        if (this.canSendAlert('request_spike')) {
-          this.markAlertSent('request_spike');
-          sendWebhookAlert({
-            type: 'request_spike',
-            message: `Request spike detected: ${this.requestTimestamps.length} requests in last 5 minutes`,
-            details: { requestCount: this.requestTimestamps.length, windowMs: REQUEST_WINDOW_MS },
             timestamp: new Date().toISOString(),
           });
         }
