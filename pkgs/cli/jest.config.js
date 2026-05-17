@@ -15,6 +15,7 @@ module.exports = {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@dustregen/contract$': '<rootDir>/../contract/src/index.ts',
     '^@midnight-ntwrk/(.*)$': '<rootDir>/src/__mocks__/@midnight-ntwrk/$1.ts',
+    '^@aws-sdk/client-kms$': '<rootDir>/src/__mocks__/@aws-sdk/client-kms.ts',
   },
   transform: {
     '^.+\\.tsx?$': [

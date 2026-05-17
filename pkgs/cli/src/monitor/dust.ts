@@ -17,6 +17,12 @@ export interface DustSnapshot {
   readonly regenSpecksPerSecond: bigint;
 }
 
+export interface AutoRefillOpts {
+  submitRefillTx: () => Promise<string>;
+  getNightBalance: () => bigint;
+  logger: { info: (...args: any[]) => void; warn: (...args: any[]) => void };
+}
+
 export function computeDustCapacity(nightStars: bigint): bigint {
   return (DUST_CAP_PER_NIGHT_IN_SPECKS * nightStars) / STARS_PER_NIGHT;
 }
@@ -43,9 +49,20 @@ export function isLowDust(dustSpecks: bigint): boolean {
   return dustSpecks < LOW_DUST_THRESHOLD_SPECKS;
 }
 
+/**
+ * Compute G_dust(t) = min(5 * V_NIGHT, R_g * V_Star * delta_t)
+ * where V_NIGHT is in stars, R_g is REGEN_SPECKS_PER_STAR_PER_SEC, delta_t is seconds since last refill
+ */
+export function computeRefillAmount(nightStars: bigint, deltaSeconds: bigint): bigint {
+  const maxRefill = 5n * nightStars * SPECKS_PER_DUST / STARS_PER_NIGHT;
+  const regenRefill = REGEN_SPECKS_PER_STAR_PER_SEC * nightStars * deltaSeconds;
+  return maxRefill < regenRefill ? maxRefill : regenRefill;
+}
+
 const ALERT_DEBOUNCE_MS = 5 * 60 * 1000; // 5 minutes
 const REQUEST_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 const REQUEST_SPIKE_THRESHOLD = 30;
+const REFILL_COOLDOWN_MS = 60_000; // 60 seconds cooldown between refill attempts
 
 export class DustMonitor {
   private subscription: Subscription | null = null;
@@ -54,6 +71,9 @@ export class DustMonitor {
   private getWalletState: () => { nightStars: bigint; dustSpecks: bigint } | null;
   private requestTimestamps: number[] = [];
   private lastAlertSent: Map<string, number> = new Map();
+  private autoRefillOpts: AutoRefillOpts | null = null;
+  private lastRefillAttempt: number = 0;
+  private lastRefillTime: number = 0;
 
   constructor(
     getWalletState: () => { nightStars: bigint; dustSpecks: bigint } | null,
@@ -67,6 +87,15 @@ export class DustMonitor {
     this.requestTimestamps.push(Date.now());
   }
 
+  enableAutoRefill(opts: AutoRefillOpts): void {
+    this.autoRefillOpts = opts;
+    this.lastRefillTime = Date.now();
+  }
+
+  disableAutoRefill(): void {
+    this.autoRefillOpts = null;
+  }
+
   private canSendAlert(type: string): boolean {
     const lastSent = this.lastAlertSent.get(type);
     if (!lastSent) return true;
@@ -75,6 +104,39 @@ export class DustMonitor {
 
   private markAlertSent(type: string): void {
     this.lastAlertSent.set(type, Date.now());
+  }
+
+  private async attemptAutoRefill(dustSpecks: bigint): Promise<void> {
+    if (!this.autoRefillOpts) return;
+
+    const now = Date.now();
+    if (now - this.lastRefillAttempt < REFILL_COOLDOWN_MS) {
+      return; // Cooldown active, skip
+    }
+
+    if (!isLowDust(dustSpecks)) return;
+
+    this.lastRefillAttempt = now;
+    const { submitRefillTx, getNightBalance, logger } = this.autoRefillOpts;
+
+    try {
+      const nightBalance = getNightBalance();
+      const deltaSeconds = BigInt(Math.floor((now - this.lastRefillTime) / 1000));
+      const refillAmount = computeRefillAmount(nightBalance, deltaSeconds);
+
+      logger.info('Attempting auto-refill', {
+        dustSpecks: dustSpecks.toString(),
+        refillAmount: refillAmount.toString(),
+        deltaSeconds: deltaSeconds.toString(),
+      });
+
+      const txId = await submitRefillTx();
+      this.lastRefillTime = now;
+
+      logger.info('Auto-refill submitted successfully', { txId });
+    } catch (err) {
+      logger.warn('Auto-refill failed', { error: (err as Error).message });
+    }
   }
 
   start(intervalMs: number = 10_000): void {
@@ -120,6 +182,9 @@ export class DustMonitor {
             timestamp: new Date().toISOString(),
           });
         }
+
+        // Attempt auto-refill if enabled
+        this.attemptAutoRefill(dustSpecks);
       }
     });
   }

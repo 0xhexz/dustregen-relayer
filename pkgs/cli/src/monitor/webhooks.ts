@@ -4,7 +4,7 @@ import { createLogger } from '../logger';
 const logger = createLogger('webhooks');
 
 export interface WebhookPayload {
-  type: 'low_dust' | 'request_spike';
+  type: 'low_dust' | 'request_spike' | 'refill_success' | 'refill_failure' | string;
   message: string;
   details: Record<string, unknown>;
   timestamp: string;

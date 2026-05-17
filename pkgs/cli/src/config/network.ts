@@ -1,5 +1,7 @@
 import { ConfigurationError } from '../errors.js';
 
+export type SeedEncryptionMode = 'plaintext' | 'kms' | 'passphrase';
+
 export interface NetworkConfig {
   readonly networkId: 'PreProd';
   readonly nodeRpcUrl: string;
@@ -13,6 +15,10 @@ export interface NetworkConfig {
   readonly walletSyncTimeoutMs: number;
   readonly relayerPort: number;
   readonly additionalFeeOverhead: bigint;
+  readonly seedEncryptionMode: SeedEncryptionMode;
+  readonly kmsKeyId?: string;
+  readonly kmsRegion?: string;
+  readonly encryptedSeedPath?: string;
 }
 
 const CONTRACT_ADDRESS_REGEX = /^(0x)?[0-9a-fA-F]{64}$/;
@@ -52,7 +58,31 @@ export function loadNetworkConfig(env: Record<string, string | undefined> = proc
     );
   }
 
-  const sponsorSeed = requireEnv(env, 'SPONSOR_SEED', 'Sponsor wallet seed phrase');
+  // Seed encryption mode
+  const seedEncryptionModeRaw = (env['SEED_ENCRYPTION_MODE']?.trim() || 'plaintext') as string;
+  if (!['plaintext', 'kms', 'passphrase'].includes(seedEncryptionModeRaw)) {
+    throw new ConfigurationError(
+      `Invalid SEED_ENCRYPTION_MODE: must be 'plaintext', 'kms', or 'passphrase', got: ${seedEncryptionModeRaw}`
+    );
+  }
+  const seedEncryptionMode = seedEncryptionModeRaw as SeedEncryptionMode;
+
+  let sponsorSeed = '';
+  let kmsKeyId: string | undefined;
+  let kmsRegion: string | undefined;
+  let encryptedSeedPath: string | undefined;
+
+  if (seedEncryptionMode === 'plaintext') {
+    sponsorSeed = requireEnv(env, 'SPONSOR_SEED', 'Sponsor wallet seed phrase');
+    // eslint-disable-next-line no-console
+    console.warn('[DEPRECATION] SEED_ENCRYPTION_MODE=plaintext is deprecated. Use kms or passphrase mode for production.');
+  } else if (seedEncryptionMode === 'kms') {
+    kmsKeyId = requireEnv(env, 'KMS_KEY_ID', 'AWS KMS Key ID');
+    kmsRegion = requireEnv(env, 'KMS_REGION', 'AWS KMS Region');
+    encryptedSeedPath = requireEnv(env, 'ENCRYPTED_SEED_PATH', 'Path to encrypted seed file');
+  } else if (seedEncryptionMode === 'passphrase') {
+    encryptedSeedPath = requireEnv(env, 'ENCRYPTED_SEED_PATH', 'Path to encrypted seed file');
+  }
 
   const privateStateDir = env['PRIVATE_STATE_DIR']?.trim() || './.sponsor-state';
 
@@ -98,5 +128,9 @@ export function loadNetworkConfig(env: Record<string, string | undefined> = proc
     walletSyncTimeoutMs,
     relayerPort,
     additionalFeeOverhead,
+    seedEncryptionMode,
+    kmsKeyId,
+    kmsRegion,
+    encryptedSeedPath,
   };
 }

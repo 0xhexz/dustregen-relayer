@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { loadNetworkConfig } from './config/network';
+import { loadSponsorKeyMaterial } from './config/key-loader';
 import { buildSponsorWallet } from './wallet/sponsor';
 import { createSponsorMutex } from './queue/mutex';
 import { DustUtxoPool, UTXO_SPLIT_AMOUNT, REPLENISH_COUNT } from './wallet/utxo-pool';
 import { DustUtxoSplitter } from './wallet/utxo-splitter';
 import { PoolAllocator } from './queue/pool-allocator';
 import { DustMonitor } from './monitor/dust';
+import { DustRefillDaemon } from './monitor/refill-daemon';
 import { createRelayerApp } from './relayer/server';
 import { runSimulatorFlow } from './simulator/flow';
 import { createLogger } from './logger';
@@ -34,9 +36,10 @@ program
   });
 
 async function startRelayer(): Promise<void> {
-  const logger = createLogger('dustregen-relayer');
+  const cfg = loadNetworkConfig();
+  const seed = await loadSponsorKeyMaterial(cfg);
+  const logger = createLogger('dustregen-relayer', [seed]);
   try {
-    const cfg = loadNetworkConfig();
     const sponsor = await buildSponsorWallet(cfg);
     const mutex = createSponsorMutex(logger, process.env.REDIS_URL);
     const monitor = new DustMonitor(
@@ -44,6 +47,15 @@ async function startRelayer(): Promise<void> {
       logger,
     );
     monitor.start();
+
+    // Set up auto-refill daemon
+    const refillDaemon = new DustRefillDaemon({
+      wallet: sponsor,
+      config: cfg,
+      logger,
+      monitor,
+    });
+    refillDaemon.start();
 
     // Set up UTXO pool for parallel sponsor processing
     const utxoPool = new DustUtxoPool(async () => {
@@ -68,6 +80,7 @@ async function startRelayer(): Promise<void> {
     // Graceful shutdown
     const shutdown = () => {
       logger.info('Shutting down relayer...');
+      refillDaemon.stop();
       splitter.stop();
       monitor.stop();
       server.close();
