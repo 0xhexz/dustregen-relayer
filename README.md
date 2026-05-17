@@ -1,176 +1,134 @@
 # DustRegen Relayer
 
-A sponsored gas relayer service for Midnight Network Testnet-02, enabling gas fee sponsorship for user transactions.
+A sponsored gas relayer for Midnight Network Preview testnet. It enables unfunded user wallets (zero NIGHT, zero DUST) to execute contract calls by having a persistent sponsor wallet inject DUST inputs into the user's unbalanced transaction. The user signs locally and never surrenders custody of their keys.
+
+## Prerequisites
+
+- Node.js >= 18
+- npm
+- `compactc` 0.31.0 (optional - the contract is already compiled under `pkgs/contract/src/managed/`)
 
 ## Project Structure
 
 ```
 dustregen-relayer/
 ├── pkgs/
-│   ├── contract/          # Compact Smart Contract
+│   ├── contract/            # Compact smart contract + compiled bindings
 │   │   ├── src/
-│   │   │   ├── index.ts
-│   │   │   └── DustRegenRelayer.compact
-│   │   ├── package.json
-│   │   └── tsconfig.json
-│   └── cli/              # TypeScript CLI & Express Relayer Service
+│   │   │   ├── test-call.compact
+│   │   │   └── managed/    # Generated TypeScript bindings, ZK keys, ZKIR
+│   │   └── package.json
+│   └── cli/                 # Express relayer service + CLI simulator
 │       ├── src/
-│       │   ├── index.ts
-│       │   ├── relayer/
-│       │   ├── wallet/
-│       │   ├── transaction/
-│       │   └── config/
-│       ├── package.json
-│       └── tsconfig.json
-├── package.json          # Monorepo root
-├── tsconfig.json         # Root TypeScript config
-├── agent.md             # Agent steering rules
-├── claude.md            # Claude development guidelines
-└── README.md
+│       │   ├── index.ts         # Commander entry point (relayer | simulate)
+│       │   ├── config/          # Network config, logger
+│       │   ├── wallet/          # Sponsor and ephemeral user wallet builders
+│       │   ├── transaction/     # Codec (serialize/deserialize), sign helpers
+│       │   ├── queue/           # SponsorMutex (FIFO exclusive access)
+│       │   ├── relayer/         # Express app, routes, middleware
+│       │   ├── monitor/         # DustMonitor (battery-level tracking)
+│       │   ├── simulator/       # End-to-end sponsorship flow
+│       │   └── __tests__/       # Unit and property-based tests
+│       └── package.json
+├── docs/                    # Deployment and operational guides
+├── .env.example             # Environment variable template
+├── package.json             # Monorepo root (npm workspaces)
+└── tsconfig.json
 ```
 
-## Features
-
-- **Gas Sponsorship**: Sponsor gas fees for user transactions on Midnight Network
-- **Compact Smart Contract**: Secure contract for managing relayer state and sponsorship logic
-- **TypeScript CLI**: Command-line interface for wallet and transaction management
-- **Express API**: REST API for programmatic access to relayer services
-- **Testnet-02 Ready**: Configured for Midnight Network Testnet-02
-
-## Prerequisites
-
-- Node.js >= 18.0.0
-- npm or yarn
-- Midnight Network Testnet-02 access
-
-## Installation
+## Install
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd dustregen-relayer
-
-# Install dependencies
 npm install
+```
 
-# Build all packages
+## Configure
+
+1. Copy the environment template:
+
+```bash
+cp .env.example .env
+```
+
+2. Fill in the values:
+   - `CONTRACT_ADDRESS` - your deployed test-call contract address
+   - `SPONSOR_SEED` - 12-word mnemonic for the sponsor wallet (must hold NIGHT to generate DUST)
+
+See `.env.example` for all available configuration variables.
+
+## Build
+
+```bash
 npm run build
 ```
 
-## Usage
+This compiles TypeScript in both `pkgs/contract` and `pkgs/cli`.
 
-### CLI Commands
+## Run Relayer
+
+Start the sponsored gas relayer service:
 
 ```bash
-# Initialize configuration
-npx dustregen config init
-
-# Initialize wallet
-npx dustregen wallet init
-
-# Check wallet balance
-npx dustregen wallet balance
-
-# Sponsor a transaction
-npx dustregen transaction sponsor \
-  -u <user-address> \
-  -a <gas-amount> \
-  -s <user-signature>
-
-# Start relayer service
-npx dustregen start --port 3000
+npm run dev relayer
 ```
 
-### API Endpoints
-
-- `GET /health` - Health check
-- `POST /api/v1/sponsor` - Sponsor a transaction
-- `GET /api/v1/status` - Relayer status
-
-### Example Sponsorship Request
+Or from the compiled output:
 
 ```bash
-curl -X POST http://localhost:3000/api/v1/sponsor \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user": "0x1234...",
-    "gasAmount": "1000000",
-    "userSignature": "0xabcd..."
-  }'
+node pkgs/cli/dist/index.js relayer
 ```
 
-## Development
+The relayer listens on `RELAYER_PORT` (default 3000) and exposes:
+- `POST /sponsor` - accepts an unbalanced transaction, returns a balanced transaction with DUST inputs
+- `GET /health` - returns mutex queue depth and DUST battery snapshot
 
-### Building
+## Run Simulator
+
+Run the end-to-end simulator that exercises the full sponsorship flow:
 
 ```bash
-# Build all packages
-npm run build
-
-# Build specific package
-cd pkgs/contract && npm run build
-cd pkgs/cli && npm run build
+npm run dev simulate
 ```
 
-### Testing
+The simulator builds an ephemeral user wallet, constructs a contract call, posts to the relayer for DUST balancing, signs locally, and submits the finalized transaction to the Preview node.
+
+## Test
+
+Run all tests across the monorepo:
 
 ```bash
-# Run tests
 npm test
-
-# Run linting
-npm run lint
 ```
 
-### Contract Development
+Run only the CLI workspace tests:
 
-The Compact contract is located in `pkgs/contract/src/DustRegenRelayer.compact`. Key features:
-
-- Private state management with `disclose()` for ledger writes
-- Gas sponsorship logic with signature verification
-- Owner-controlled fee management
-- Modular composition pattern
-
-## Configuration
-
-Create a `.dustregen.config.json` file:
-
-```json
-{
-  "network": "testnet-02",
-  "relayer": {
-    "port": 3000,
-    "host": "localhost",
-    "feePercentage": 0,
-    "minSponsorshipAmount": "1000",
-    "maxSponsorshipAmount": "1000000"
-  },
-  "wallet": {
-    "mnemonic": "",
-    "derivationPath": "m/44'/60'/0'/0/0"
-  },
-  "contract": {
-    "address": "",
-    "abi": "DustRegenRelayer"
-  }
-}
+```bash
+npm test -w pkgs/cli
 ```
 
-## Security Considerations
+Run integration tests against live Preview (requires configured `.env` with real credentials):
 
-1. **Wallet Security**: Store mnemonic phrases securely using environment variables
-2. **Signature Verification**: Always verify user signatures before sponsorship
-3. **Rate Limiting**: Implement rate limiting on API endpoints
-4. **Input Validation**: Validate all user inputs
-5. **Private State**: Always use `disclose()` for private state before ledger writes
+```bash
+RUN_PREVIEW_E2E=1 npm test -w pkgs/cli
+```
 
-## Midnight Network Rules
+## Architecture
 
-- DUST is non-transferable
-- Use `waitForWalletSync()` before transaction operations
-- Use `balanceUnsealedTransaction()` for contract calls
-- Use `balanceSealedTransaction()` for atomic swaps
-- Target Compact language version >= 0.28.0
+For detailed design documentation, see [`.kiro/specs/dust-regen-relayer/design.md`](.kiro/specs/dust-regen-relayer/design.md).
+
+Key components:
+
+- **Express Relayer** - HTTP server that accepts unbalanced transactions, injects sponsor DUST, and returns balanced transactions
+- **SponsorMutex** - FIFO exclusive lock serializing balance operations to prevent UTXO collisions
+- **DustMonitor** - Battery-model tracker that monitors the sponsor's DUST regeneration and alerts on low balance
+- **CLI Simulator** - End-to-end flow that exercises the complete sponsorship cycle for testing
+
+## Security
+
+- Seed phrases are never logged or exposed in error messages
+- User signing keys never leave the user's process (non-custodial design)
+- All HTTP input is validated via zod schemas before processing
+- DUST change is always routed back to the sponsor's public key
 
 ## License
 
