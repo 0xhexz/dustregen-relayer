@@ -1,40 +1,46 @@
-import express from 'express';
+import express, { Express } from 'express';
 import cors from 'cors';
-import { createLogger } from '../logger.js';
+import { createSponsorRouter } from './routes/sponsor';
+import { errorMiddleware } from './middleware';
+import { SponsorWallet } from '../wallet/sponsor';
+import { SponsorMutex } from '../queue/mutex';
+import { DustMonitor } from '../monitor/dust';
+import { NetworkConfig } from '../config/network';
 
-const logger = createLogger('relayer');
-const app = express();
+export function createRelayerApp(
+  cfg: NetworkConfig,
+  sponsor: SponsorWallet,
+  mutex: SponsorMutex,
+  monitor: DustMonitor,
+): Express {
+  const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+  // Standard middleware
+  app.use(cors());
+  app.use(express.json());
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    service: 'dustregen-relayer',
-    timestamp: new Date().toISOString(),
-    network: 'midnight-preview'
-  });
-});
-
-// Start the relayer server
-export async function startRelayer(port: number = 3000, host: string = 'localhost'): Promise<void> {
-  return new Promise((resolve) => {
-    const server = app.listen(port, host, () => {
-      logger.info(`Relayer server started on http://${host}:${port}`);
-      logger.info(`Health check: http://${host}:${port}/health`);
-    });
-
-    // Handle graceful shutdown
-    process.on('SIGTERM', () => {
-      logger.info('Received SIGTERM, shutting down gracefully');
-      server.close(() => {
-        logger.info('Server closed');
-        process.exit(0);
-      });
+  // Health endpoint
+  app.get('/health', (_req, res) => {
+    const snapshot = monitor.current();
+    res.json({
+      status: 'healthy',
+      service: 'dustregen-relayer',
+      timestamp: new Date().toISOString(),
+      network: 'midnight-preview',
+      pending: mutex.pending,
+      dust: snapshot ? {
+        dustSpecks: snapshot.dustSpecks.toString(),
+        capacityPct: snapshot.capacityPct,
+        nightStars: snapshot.nightStars.toString(),
+      } : null,
     });
   });
+
+  // Sponsor route
+  app.use(createSponsorRouter(cfg, sponsor, mutex));
+
+  // Error middleware (must be last)
+  app.use(errorMiddleware);
+
+  return app;
 }
