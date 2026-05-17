@@ -1,0 +1,21 @@
+{
+  "apps": [
+    {
+      "name": "dustregen-relayer",
+      "script": "pkgs/cli/dist/index.js",
+      "args": "relayer",
+      "cwd": ".",
+      "env": {
+        "NODE_ENV": "production",
+        "PRIVATE_STATE_DIR": "./.sponsor-state",
+        "RELAYER_PORT": "3000"
+      },
+      "max_restarts": 10,
+      "min_uptime": "5000",
+      "restart_delay": 5000,
+      "autorestart": true,
+      "watch": false,
+      "log_date_format": "YYYY-MM-DD HH:mm:ss Z"
+    }
+  ]
+}
