@@ -1,0 +1,53 @@
+{
+  "name": "midnight-skills",
+  "version": "1.0.0",
+  "description": "Skills for building confidential apps on Midnight Network. Guides LLMs through contracts, tests, and private token workflows.",
+  "author": {
+    "name": "Tusharpamnani",
+    "url": "https://github.com/tusharpamnani"
+  },
+  "contributors": [
+    {
+      "name": "Tusharpamnani",
+      "url": "https://github.com/tusharpamnani"
+    },
+    {
+      "name": "Kali-Decoder",
+      "url": "https://github.com/Kali-Decoder"
+    }
+  ],
+  "homepage": "https://midnight-skills.netlify.app",
+  "repository": "https://github.com/Kali-Decoder/Midnight-skills",
+  "license": "MIT",
+  "keywords": [
+    "midnight",
+    "compact",
+    "web3",
+    "blockchain",
+    "confidential",
+    "privacy"
+  ],
+  "skills": [
+    "./addresses",
+    "./scaffold",
+    "./decryption",
+    "./private-token",
+    "./vesting-wallet",
+    "./erc20-wrapper",
+    "./erc7984-standard",
+    "./confidential-payroll",
+    "./1am-wallet",
+    "./compact",
+    "./testing",
+    "./multinetwork",
+    "./indexer",
+    "./security",
+    "./example-counter",
+    "./nft",
+    "./token-transfers"
+  ],
+  "private": true,
+  "dependencies": {
+    "mongodb": "^6.13.0"
+  }
+}

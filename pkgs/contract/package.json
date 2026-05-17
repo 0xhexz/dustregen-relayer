@@ -1,0 +1,28 @@
+{
+  "name": "@dustregen/contract",
+  "version": "1.0.0",
+  "description": "Compact smart contract for DustRegen Relayer",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "lint": "eslint src/**/*.ts",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.16.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.0.0",
+    "fast-check": "^3.22.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.0.0"
+  },
+  "keywords": ["midnight", "compact", "smart-contract", "relayer"],
+  "author": "DustRegen Team",
+  "license": "MIT"
+}

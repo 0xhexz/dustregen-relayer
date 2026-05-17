@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "file": "index.js",
+  "sourceRoot": "../../../../../../",
+  "sources": ["pkgs/contract/src/test-call.compact"],
+  "names": [],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;EAIA;;;;;;;;;;MAUA,AAAA,gBAEC;;;;;;;;;;;;;;;;;;;;;;OAAA;;;;;;GACA;EAbD;;;;;;;;;;;;;;;;;;;;;;;;;;IAKA;;;;;;;;;yEAA+B;;;;;;;GAQ9B;EAHD,AAAA,mBAEC;UADC,KAAO;IAAP;;;;;;;;;;6FAAA,KAAO;;;;wEAAA;;GACR;;;;;;;;;;;;;;;;IAPD;qCAAA;;;;;;;;;;;0GAA+B;KAAA;;;;;;;;;;"
+}

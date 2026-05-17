@@ -1,0 +1,17 @@
+// DustRegen Relayer - Phase 1: Test Compact Contract
+// Toolchain: compactc >= 0.28.0 (Language >= 0.16)
+// Midnight Network Testnet-02
+
+pragma language_version >= 0.16;
+
+import CompactStandardLibrary;
+
+// Public ledger state: bounded Counter ADT
+export ledger counter: Counter;
+
+// Exported circuit: increments the public counter by 1.
+// No witnesses are read here, so disclose() is not required.
+// (When private/witness data flows to the ledger, it must be wrapped in disclose().)
+export circuit incrementCounter(): [] {
+  counter.increment(1);
+}

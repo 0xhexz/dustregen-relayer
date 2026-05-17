@@ -1,0 +1,21 @@
+{
+  "name": "midnight-skills",
+  "owner": {
+    "name": "Tusharpamnani, Kali-Decoder"
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "description": "Skills for building confidential apps on Midnight Network. Guides LLMs through contracts, tests, and private token workflows."
+  },
+  "plugins": [
+    {
+      "name": "midnight-skills",
+      "source": "./",
+      "version": "1.0.0",
+      "description": "Skills for building confidential apps on Midnight Network. Guides LLMs through contracts, tests, and private token workflows.",
+      "author": {
+        "name": "Tusharpamnani, Kali-Decoder"
+      }
+    }
+  ]
+}

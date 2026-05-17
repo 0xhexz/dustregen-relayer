@@ -1,0 +1,92 @@
+// DustRegen Relayer Contract
+// Compact version >= 0.28.0
+// Midnight Network Testnet-02
+
+module DustRegenRelayer {
+  // Private state for relayer
+  struct RelayerPrivateState {
+    balance: Uint64;
+    sponsoredCount: Uint64;
+    activeUsers: Set<Bytes32>;
+  }
+  
+  // Public ledger state
+  ledger {
+    totalSponsored: Uint64;
+    relayerActive: Bool;
+    owner: Bytes32;
+    feePercentage: Uint8; // 0-100 percentage
+  }
+  
+  // Initialize the relayer
+  circuit initialize(owner: Bytes32, initialFee: Uint8) -> [] {
+    require(initialFee <= 100, "Fee must be 0-100");
+    
+    ledger.owner = owner;
+    ledger.feePercentage = initialFee;
+    ledger.relayerActive = true;
+    ledger.totalSponsored = 0;
+  }
+  
+  // Sponsor a transaction (gas fee payment)
+  circuit sponsorTransaction(
+    user: Bytes32,
+    gasAmount: Uint64,
+    userSignature: Bytes
+  ) -> [] {
+    require(ledger.relayerActive, "Relayer not active");
+    require(verifySignature(user, userSignature), "Invalid signature");
+    
+    // Load and update private state
+    let state = loadRelayerState();
+    require(state.balance >= gasAmount, "Insufficient balance");
+    
+    state.balance = state.balance - gasAmount;
+    state.sponsoredCount = state.sponsoredCount + 1;
+    state.activeUsers.add(user);
+    
+    // Disclose private state before ledger write
+    disclose(state);
+    
+    // Update public ledger
+    ledger.totalSponsored = ledger.totalSponsored + gasAmount;
+  }
+  
+  // Deposit funds to relayer
+  circuit deposit(amount: Uint64) -> [] {
+    let state = loadRelayerState();
+    state.balance = state.balance + amount;
+    disclose(state);
+  }
+  
+  // Update fee percentage (owner only)
+  circuit updateFee(newFee: Uint8) -> [] {
+    require(msg.sender == ledger.owner, "Only owner can update fee");
+    require(newFee <= 100, "Fee must be 0-100");
+    
+    ledger.feePercentage = newFee;
+  }
+  
+  // Toggle relayer active status (owner only)
+  circuit toggleActive() -> [] {
+    require(msg.sender == ledger.owner, "Only owner can toggle");
+    ledger.relayerActive = !ledger.relayerActive;
+  }
+  
+  // Helper function to load relayer state
+  private func loadRelayerState() -> RelayerPrivateState {
+    // In a real implementation, this would load from private storage
+    return RelayerPrivateState {
+      balance: 0,
+      sponsoredCount: 0,
+      activeUsers: Set::new()
+    };
+  }
+  
+  // Helper function to verify signatures
+  private func verifySignature(user: Bytes32, signature: Bytes) -> Bool {
+    // Signature verification logic
+    // In production, use proper cryptographic verification
+    return true;
+  }
+}

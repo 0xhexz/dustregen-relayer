@@ -1,0 +1,20 @@
+{
+  "name": "midnight-skills",
+  "version": "1.0.0",
+  "description": "Skills for developing apps on Midnight. Assists LLM with frontend, smart contract deployment, and deploying to production",
+  "author": {
+    "name": "Tusharpamnani, Kali-Decoder",
+    "url": "https://github.com/tusharpamnani, https://github.com/Kali-Decoder"
+  },
+  "homepage": "https://midnightskills.dev",
+  "repository": "https://github.com/Kali-Decoder/Midnight-Skills",
+  "license": "MIT",
+  "keywords": ["midnight", "compact", "privacy", "web3", "blockchain", "dapp"],
+  "skills": [
+    "./why-midnight",
+    "./midnight-js",
+    "./1am-wallet",
+    "./compact",
+    "./testing"
+  ]
+}

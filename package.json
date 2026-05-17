@@ -1,0 +1,36 @@
+{
+  "name": "dustregen-relayer",
+  "version": "1.0.0",
+  "description": "Sponsored Gas Relayer for Midnight Network Testnet-02",
+  "private": true,
+  "workspaces": [
+    "pkgs/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "clean": "rm -rf node_modules && npm run clean --workspaces",
+    "dev": "npm run dev --workspaces"
+  },
+  "keywords": [
+    "midnight",
+    "blockchain",
+    "relayer",
+    "gas-sponsorship",
+    "compact",
+    "typescript"
+  ],
+  "author": "DustRegen Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0"
+  }
+}

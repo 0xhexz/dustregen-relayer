@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "midnightskill": {
+      "source": "Kali-Decoder/midnight-skills",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "a43f776d5a7cbb6e224c236233adabb5378e6a54da8f000ceb9afb13203becba"
+    }
+  }
+}
