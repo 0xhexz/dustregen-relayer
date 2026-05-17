@@ -7,6 +7,8 @@ import { SponsorMutex, ISponsorMutex } from '../../queue/mutex';
 import { TransactionParseError, InsufficientDUSTBalanceError, InsufficientFeeError, BalanceError, InvalidContractError } from '../../errors';
 import { NetworkConfig } from '../../config/network';
 import { isContractWhitelisted } from '../../config/registry';
+import { DustMonitor } from '../../monitor/dust';
+import { RelayerMetrics } from '../metrics';
 
 export const SponsorRequestSchema = z.object({
   unbalancedTx: z.string().regex(/^[0-9a-fA-F]+$/, 'must be hex'),
@@ -22,10 +24,13 @@ export function createSponsorRouter(
   cfg: NetworkConfig,
   sponsor: SponsorWallet,
   mutex: ISponsorMutex,
+  metrics: RelayerMetrics,
+  monitor: DustMonitor,
 ): Router {
   const router = Router();
 
   router.post('/sponsor', async (req: Request, res: Response, next: NextFunction) => {
+    monitor.recordRequest();
     try {
       // Validate request body
       const parsed = SponsorRequestSchema.safeParse(req.body);
@@ -99,8 +104,10 @@ export function createSponsorRouter(
         }
       });
 
+      metrics.totalSponsored++;
       res.json(result);
     } catch (err) {
+      metrics.totalFailed++;
       next(err);
     }
   });

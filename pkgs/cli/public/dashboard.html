@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DustRegen Relayer Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <header class="bg-gray-800 border-b border-gray-700 p-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-purple-400">DustRegen Relayer Dashboard</h1>
+      <div id="connection-status" class="flex items-center gap-2">
+        <span id="status-dot" class="w-3 h-3 rounded-full bg-red-500"></span>
+        <span id="status-text" class="text-sm text-gray-400">Connecting...</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <!-- Card 1: DUST Balance Gauge -->
+      <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+        <h2 class="text-lg font-semibold text-gray-300 mb-3">DUST Balance</h2>
+        <div class="flex justify-center">
+          <canvas id="dustGauge" width="200" height="200"></canvas>
+        </div>
+        <div class="text-center mt-2">
+          <p id="dustPct" class="text-2xl font-bold text-purple-400">--%</p>
+          <p id="dustSpecks" class="text-xs text-gray-500">-- specks</p>
+        </div>
+      </div>
+
+      <!-- Card 2: Queue Status -->
+      <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+        <h2 class="text-lg font-semibold text-gray-300 mb-3">Queue Status</h2>
+        <div class="space-y-4 mt-6">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-400">Pending</span>
+            <span id="pendingCount" class="text-2xl font-bold text-white">--</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-400">Lock Status</span>
+            <span id="lockStatus" class="px-3 py-1 rounded-full text-sm font-medium bg-gray-700">--</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-400">Network</span>
+            <span id="networkInfo" class="text-sm text-gray-300">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Transaction Metrics -->
+      <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+        <h2 class="text-lg font-semibold text-gray-300 mb-3">Transaction Metrics</h2>
+        <div class="space-y-4 mt-6">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-400">Total Sponsored</span>
+            <span id="totalSponsored" class="text-2xl font-bold text-green-400">--</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-400">Total Failed</span>
+            <span id="totalFailed" class="text-2xl font-bold text-red-400">--</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-400">Success Rate</span>
+            <span id="successRate" class="text-lg font-medium text-gray-300">--%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: Balance History -->
+      <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+        <h2 class="text-lg font-semibold text-gray-300 mb-3">Balance History</h2>
+        <canvas id="historyChart" width="300" height="200"></canvas>
+      </div>
+    </div>
+
+    <div class="mt-4 text-center text-xs text-gray-600">
+      <span id="lastUpdate">Last update: --</span>
+    </div>
+  </main>
+
+  <script>
+    const POLL_INTERVAL = 10000;
+    const MAX_HISTORY = 20;
+    const history = [];
+
+    // Initialize DUST Gauge (doughnut)
+    const gaugeCtx = document.getElementById('dustGauge').getContext('2d');
+    const gaugeChart = new Chart(gaugeCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Used', 'Remaining'],
+        datasets: [{
+          data: [0, 100],
+          backgroundColor: ['#a855f7', '#374151'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        cutout: '70%',
+        responsive: false,
+        plugins: { legend: { display: false } },
+      }
+    });
+
+    // Initialize History Chart (line)
+    const historyCtx = document.getElementById('historyChart').getContext('2d');
+    const historyChart = new Chart(historyCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'DUST Specks',
+          data: [],
+          borderColor: '#a855f7',
+          backgroundColor: 'rgba(168, 85, 247, 0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            ticks: { color: '#6b7280', maxTicksLimit: 5 },
+            grid: { color: '#374151' }
+          },
+          y: {
+            ticks: { color: '#6b7280' },
+            grid: { color: '#374151' },
+            beginAtZero: true,
+          }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    function setConnected(connected) {
+      const dot = document.getElementById('status-dot');
+      const text = document.getElementById('status-text');
+      if (connected) {
+        dot.className = 'w-3 h-3 rounded-full bg-green-500';
+        text.textContent = 'Connected';
+      } else {
+        dot.className = 'w-3 h-3 rounded-full bg-red-500';
+        text.textContent = 'Disconnected';
+      }
+    }
+
+    function formatSpecks(specksStr) {
+      const num = BigInt(specksStr);
+      const dust = Number(num) / 1e15;
+      return dust.toFixed(4) + ' DUST';
+    }
+
+    async function pollHealth() {
+      try {
+        const res = await fetch('/health');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        setConnected(true);
+        updateDashboard(data);
+      } catch (err) {
+        setConnected(false);
+      }
+    }
+
+    function updateDashboard(data) {
+      // Queue status
+      document.getElementById('pendingCount').textContent = data.pending ?? 0;
+      const lockEl = document.getElementById('lockStatus');
+      if (data.pending > 0) {
+        lockEl.textContent = 'Locked';
+        lockEl.className = 'px-3 py-1 rounded-full text-sm font-medium bg-red-900 text-red-300';
+      } else {
+        lockEl.textContent = 'Free';
+        lockEl.className = 'px-3 py-1 rounded-full text-sm font-medium bg-green-900 text-green-300';
+      }
+      document.getElementById('networkInfo').textContent = data.network || '--';
+
+      // Transaction metrics
+      const sponsored = data.totalSponsored ?? 0;
+      const failed = data.totalFailed ?? 0;
+      document.getElementById('totalSponsored').textContent = sponsored;
+      document.getElementById('totalFailed').textContent = failed;
+      const total = sponsored + failed;
+      const rate = total > 0 ? ((sponsored / total) * 100).toFixed(1) : '100.0';
+      document.getElementById('successRate').textContent = rate + '%';
+
+      // DUST balance
+      if (data.dust) {
+        const pct = (data.dust.capacityPct * 100).toFixed(1);
+        document.getElementById('dustPct').textContent = pct + '%';
+        document.getElementById('dustSpecks').textContent = formatSpecks(data.dust.dustSpecks);
+
+        gaugeChart.data.datasets[0].data = [parseFloat(pct), 100 - parseFloat(pct)];
+        gaugeChart.update();
+
+        // History
+        const now = new Date().toLocaleTimeString();
+        history.push({ time: now, specks: Number(BigInt(data.dust.dustSpecks)) / 1e15 });
+        if (history.length > MAX_HISTORY) history.shift();
+
+        historyChart.data.labels = history.map(h => h.time);
+        historyChart.data.datasets[0].data = history.map(h => h.specks);
+        historyChart.update();
+      }
+
+      document.getElementById('lastUpdate').textContent = 'Last update: ' + new Date().toLocaleTimeString();
+    }
+
+    // Start polling
+    pollHealth();
+    setInterval(pollHealth, POLL_INTERVAL);
+  </script>
+</body>
+</html>

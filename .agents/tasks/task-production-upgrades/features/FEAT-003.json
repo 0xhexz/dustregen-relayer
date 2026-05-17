@@ -1,0 +1,34 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Implement Task 4 (Webhook Alerts & DustMonitor Upgrades) and Task 5 (Visual Monitoring Dashboard). These are monitoring/observability features.",
+  "status": "in_progress",
+  "steps": [
+    "TASK 4 - Webhook Alerts:",
+    "Create pkgs/cli/src/monitor/webhooks.ts with an async function sendWebhookAlert(payload: WebhookPayload) that posts to SLACK_WEBHOOK_URL and DISCORD_WEBHOOK_URL env vars (if set). Use axios for HTTP posts. Before sending, redact any values matching seed/mnemonic/private key patterns (reuse the SENSITIVE_PATTERN regex from logger.ts). Format Slack payload as {text: message} and Discord as {content: message}.",
+    "Extend pkgs/cli/src/monitor/dust.ts DustMonitor class: add a private requestCounter (tracks requests in the last 5 minutes using a sliding window array of timestamps). Add method recordRequest() that appends to the window. In the interval subscription, after checking isLowDust, also check if requestCounter exceeds 30 in the last 5 minutes. When either threshold is breached, call sendWebhookAlert with appropriate message. Import and use the webhook module.",
+    "Add SLACK_WEBHOOK_URL and DISCORD_WEBHOOK_URL to .env.example with empty placeholder values.",
+    "",
+    "TASK 5 - Visual Dashboard:",
+    "Create pkgs/cli/public/dashboard.html - a single-page responsive dashboard using Tailwind CSS (CDN) and Chart.js (CDN). Must poll GET /health every 10 seconds. Display: current DUST balance vs capacity cap (5 DUST per NIGHT), active queue status (pending count, lock status), metrics of total sponsored transactions and failed attempts (read from /health response). Use Chart.js line chart for balance history over time.",
+    "Update pkgs/cli/src/relayer/server.ts to serve static files from a 'public' directory using express.static(). Add the static middleware before routes. The path should resolve to pkgs/cli/public/ relative to the source.",
+    "Extend the /health endpoint response in server.ts to include totalSponsored and totalFailed counters. Add a simple in-memory counter object that the sponsor route increments on success/failure. Pass it to the app factory or use a shared module."
+  ],
+  "acceptance_criteria": [
+    "pkgs/cli/src/monitor/webhooks.ts exports sendWebhookAlert function",
+    "DustMonitor triggers webhook alerts on low DUST (< 5e14 specks) and request spike (> 30 in 5 min)",
+    "Sensitive data is redacted before webhook dispatch",
+    "pkgs/cli/public/dashboard.html exists and is a valid HTML5 page with Tailwind + Chart.js",
+    "Dashboard polls /health and displays DUST balance, queue status, and tx metrics",
+    "express.static serves the public/ directory",
+    "/health includes totalSponsored and totalFailed in response",
+    "npm run build succeeds",
+    "npm test -w pkgs/cli passes"
+  ],
+  "verification": [
+    "npm run build",
+    "npm test -w pkgs/cli"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
