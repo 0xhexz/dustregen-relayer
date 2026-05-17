@@ -1,10 +1,10 @@
-import { DustMonitor, LOW_DUST_THRESHOLD_SPECKS, SPECKS_PER_DUST, computeRefillAmount } from '../monitor/dust';
-import { DustRefillDaemon } from '../monitor/refill-daemon';
-import { SponsorWallet, Wallet } from '../wallet/sponsor';
-import { NetworkConfig } from '../config/network';
+import { DustMonitor, LOW_DUST_THRESHOLD_SPECKS, SPECKS_PER_DUST, computeRefillAmount } from '../monitor/dust.js';
+import { DustRefillDaemon } from '../monitor/refill-daemon.js';
+import { SponsorWallet, Wallet } from '../wallet/sponsor.js';
+import { NetworkConfig } from '../config/network.js';
 import { of } from 'rxjs';
 
-jest.mock('../monitor/webhooks', () => ({
+jest.mock('../monitor/webhooks.js', () => ({
   sendWebhookAlert: jest.fn().mockResolvedValue(undefined),
 }));
 

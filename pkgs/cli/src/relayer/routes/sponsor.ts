@@ -1,15 +1,15 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { firstValueFrom } from 'rxjs';
-import { deserializeUnbalanced, serializeBalanced } from '../../transaction/codec';
-import { waitForWalletSync, verifyDustRegistration, SponsorWallet } from '../../wallet/sponsor';
-import { ISponsorMutex, IPoolAllocator } from '../../queue/mutex';
-import { TransactionParseError, InsufficientDUSTBalanceError, InsufficientFeeError, BalanceError, InvalidContractError } from '../../errors';
-import { NetworkConfig } from '../../config/network';
-import { isContractWhitelisted } from '../../config/registry';
-import { DustMonitor } from '../../monitor/dust';
-import { RelayerMetrics } from '../metrics';
-import { computeDynamicFeeSafetyMargin } from '../../fees/dynamic-fee';
+import { deserializeUnbalanced, serializeBalanced } from '../../transaction/codec.js';
+import { waitForWalletSync, verifyDustRegistration, SponsorWallet } from '../../wallet/sponsor.js';
+import { ISponsorMutex, IPoolAllocator } from '../../queue/mutex.js';
+import { TransactionParseError, InsufficientDUSTBalanceError, InsufficientFeeError, BalanceError, InvalidContractError } from '../../errors.js';
+import { NetworkConfig } from '../../config/network.js';
+import { isContractWhitelisted } from '../../config/registry.js';
+import { DustMonitor } from '../../monitor/dust.js';
+import { RelayerMetrics } from '../metrics.js';
+import { computeDynamicFeeSafetyMargin } from '../../fees/dynamic-fee.js';
 
 export const SponsorRequestSchema = z.object({
   unbalancedTx: z.string().regex(/^[0-9a-fA-F]+$/, 'must be hex'),

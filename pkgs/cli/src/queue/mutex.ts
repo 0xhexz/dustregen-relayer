@@ -1,5 +1,5 @@
 import { Mutex } from 'async-mutex';
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 import Redlock from 'redlock';
 
 export interface ISponsorMutex {

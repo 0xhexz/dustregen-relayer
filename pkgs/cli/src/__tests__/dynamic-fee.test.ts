@@ -1,4 +1,4 @@
-import { computeDynamicFeeSafetyMargin } from '../fees/dynamic-fee';
+import { computeDynamicFeeSafetyMargin } from '../fees/dynamic-fee.js';
 import {
   getCurrentBlockHeight,
   compute_maximum_price_adjustment,

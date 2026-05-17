@@ -1,6 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import { Request } from 'express';
-import { deserializeUnbalanced } from '../transaction/codec';
+import { deserializeUnbalanced } from '../transaction/codec.js';
 
 export function createIpRateLimiter() {
   return rateLimit({

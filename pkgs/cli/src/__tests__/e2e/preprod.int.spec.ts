@@ -1,6 +1,6 @@
-import { runSimulatorFlow } from '../../simulator/flow';
-import { loadNetworkConfig, NetworkConfig } from '../../config/network';
-import { SPECKS_PER_DUST } from '../../monitor/dust';
+import { runSimulatorFlow } from '../../simulator/flow.js';
+import { loadNetworkConfig, NetworkConfig } from '../../config/network.js';
+import { SPECKS_PER_DUST } from '../../monitor/dust.js';
 
 const RUN_PREPROD_E2E = process.env.RUN_PREPROD_E2E === '1';
 
@@ -21,7 +21,7 @@ describeOrSkip('PreProd E2E Integration', () => {
     let capturedFee: bigint = 0n;
 
     const pollFinalization = async (nodeUrl: string, txId: string, intervalMs: number, timeoutMs: number) => {
-      const { pollForFinalization } = await import('../../simulator/flow');
+      const { pollForFinalization } = await import('../../simulator/flow.js');
       const receipt = await pollForFinalization(nodeUrl, txId, intervalMs, timeoutMs);
       capturedFee = receipt.feePaid;
       return receipt;

@@ -1,5 +1,5 @@
-import { ISponsorMutex, IPoolAllocator, UtxoAllocation } from './mutex';
-import { DustUtxoPool, PoolExhaustedError } from '../wallet/utxo-pool';
+import { ISponsorMutex, IPoolAllocator, UtxoAllocation } from './mutex.js';
+import { DustUtxoPool, PoolExhaustedError } from '../wallet/utxo-pool.js';
 
 export interface AllocatorLogger {
   info: (msg: string, data?: unknown) => void;

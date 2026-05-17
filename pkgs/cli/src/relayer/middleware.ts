@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { RelayerError } from '../errors';
-import { PoolExhaustedError } from '../wallet/utxo-pool';
+import { RelayerError } from '../errors.js';
+import { PoolExhaustedError } from '../wallet/utxo-pool.js';
 
 export function errorMiddleware(err: unknown, _req: Request, res: Response, _next: NextFunction): void {
   if (err instanceof PoolExhaustedError) {

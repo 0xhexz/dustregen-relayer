@@ -1,5 +1,5 @@
 import { interval, Subscription, map } from 'rxjs';
-import { sendWebhookAlert } from './webhooks';
+import { sendWebhookAlert } from './webhooks.js';
 
 // Battery model constants
 export const STARS_PER_NIGHT = 1_000_000n;

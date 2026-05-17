@@ -1,4 +1,4 @@
-import { fastSyncSponsorWallet } from '../wallet/fast-sync';
+import { fastSyncSponsorWallet } from '../wallet/fast-sync.js';
 import {
   queryDustNullifierTransactions,
   queryDustGenerationEvents,

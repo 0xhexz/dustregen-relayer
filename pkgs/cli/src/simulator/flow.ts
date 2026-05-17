@@ -1,10 +1,10 @@
-import { NetworkConfig } from '../config/network';
-import { buildEphemeralUserWallet, EphemeralUserWallet } from '../wallet/user';
-import { waitForWalletSync } from '../wallet/sponsor';
-import { serializeUnbalanced, UnbalancedTransaction } from '../transaction/codec';
-import { signBalancedTx } from '../transaction/sign';
-import { NetworkSubmissionError } from '../errors';
-import { SPECKS_PER_DUST } from '../monitor/dust';
+import { NetworkConfig } from '../config/network.js';
+import { buildEphemeralUserWallet, EphemeralUserWallet } from '../wallet/user.js';
+import { waitForWalletSync } from '../wallet/sponsor.js';
+import { serializeUnbalanced, UnbalancedTransaction } from '../transaction/codec.js';
+import { signBalancedTx } from '../transaction/sign.js';
+import { NetworkSubmissionError } from '../errors.js';
+import { SPECKS_PER_DUST } from '../monitor/dust.js';
 
 export interface SimulatorDeps {
   buildWallet?: (cfg: NetworkConfig) => Promise<EphemeralUserWallet>;

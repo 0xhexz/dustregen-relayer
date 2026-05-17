@@ -1,12 +1,12 @@
 import request from 'supertest';
 import { Express } from 'express';
-import { createRelayerApp } from '../../relayer/server';
-import { runSimulatorFlow, SimulatorDeps } from '../../simulator/flow';
-import { NetworkConfig } from '../../config/network';
-import { SponsorMutex } from '../../queue/mutex';
-import { DustMonitor } from '../../monitor/dust';
-import { SponsorWallet, Wallet, WalletState } from '../../wallet/sponsor';
-import { serializeBalanced, BalancedTransaction } from '../../transaction/codec';
+import { createRelayerApp } from '../../relayer/server.js';
+import { runSimulatorFlow, SimulatorDeps } from '../../simulator/flow.js';
+import { NetworkConfig } from '../../config/network.js';
+import { SponsorMutex } from '../../queue/mutex.js';
+import { DustMonitor } from '../../monitor/dust.js';
+import { SponsorWallet, Wallet, WalletState } from '../../wallet/sponsor.js';
+import { serializeBalanced, BalancedTransaction } from '../../transaction/codec.js';
 import { of } from 'rxjs';
 
 function createMockWalletState(): WalletState {
