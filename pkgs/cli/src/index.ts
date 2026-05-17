@@ -2,7 +2,7 @@
 import { Command } from 'commander';
 import { loadNetworkConfig } from './config/network';
 import { buildSponsorWallet } from './wallet/sponsor';
-import { SponsorMutex } from './queue/mutex';
+import { createSponsorMutex } from './queue/mutex';
 import { DustMonitor } from './monitor/dust';
 import { createRelayerApp } from './relayer/server';
 import { runSimulatorFlow } from './simulator/flow';
@@ -24,7 +24,7 @@ program
     try {
       const cfg = loadNetworkConfig();
       const sponsor = await buildSponsorWallet(cfg);
-      const mutex = new SponsorMutex(logger);
+      const mutex = createSponsorMutex(logger, process.env.REDIS_URL);
       const monitor = new DustMonitor(
         () => null,
         logger,

@@ -5,7 +5,8 @@ export type ErrorCode =
   | 'TransactionParseError'
   | 'BalanceError'
   | 'NetworkSubmissionError'
-  | 'ConfigurationError';
+  | 'ConfigurationError'
+  | 'InvalidContractError';
 
 export abstract class RelayerError extends Error {
   abstract readonly code: ErrorCode;
@@ -51,4 +52,9 @@ export class NetworkSubmissionError extends RelayerError {
 export class ConfigurationError extends RelayerError {
   readonly code = 'ConfigurationError' as const;
   readonly httpStatus = 500;
+}
+
+export class InvalidContractError extends RelayerError {
+  readonly code = 'InvalidContractError' as const;
+  readonly httpStatus = 403;
 }

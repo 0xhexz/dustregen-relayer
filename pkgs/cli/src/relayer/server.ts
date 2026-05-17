@@ -2,15 +2,16 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import { createSponsorRouter } from './routes/sponsor';
 import { errorMiddleware } from './middleware';
+import { createIpRateLimiter, createAddressRateLimiter } from './rateLimit';
 import { SponsorWallet } from '../wallet/sponsor';
-import { SponsorMutex } from '../queue/mutex';
+import { ISponsorMutex } from '../queue/mutex';
 import { DustMonitor } from '../monitor/dust';
 import { NetworkConfig } from '../config/network';
 
 export function createRelayerApp(
   cfg: NetworkConfig,
   sponsor: SponsorWallet,
-  mutex: SponsorMutex,
+  mutex: ISponsorMutex,
   monitor: DustMonitor,
 ): Express {
   const app = express();
@@ -18,6 +19,9 @@ export function createRelayerApp(
   // Standard middleware
   app.use(cors());
   app.use(express.json());
+
+  // IP-based rate limiting (global)
+  app.use(createIpRateLimiter());
 
   // Health endpoint
   app.get('/health', (_req, res) => {
@@ -35,6 +39,9 @@ export function createRelayerApp(
       } : null,
     });
   });
+
+  // Address-based rate limiting on sponsor route
+  app.post('/sponsor', createAddressRateLimiter());
 
   // Sponsor route
   app.use(createSponsorRouter(cfg, sponsor, mutex));

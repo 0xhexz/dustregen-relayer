@@ -3,9 +3,10 @@ import { z } from 'zod';
 import { firstValueFrom } from 'rxjs';
 import { deserializeUnbalanced, serializeBalanced } from '../../transaction/codec';
 import { waitForWalletSync, verifyDustRegistration, SponsorWallet } from '../../wallet/sponsor';
-import { SponsorMutex } from '../../queue/mutex';
-import { TransactionParseError, InsufficientDUSTBalanceError, InsufficientFeeError, BalanceError } from '../../errors';
+import { SponsorMutex, ISponsorMutex } from '../../queue/mutex';
+import { TransactionParseError, InsufficientDUSTBalanceError, InsufficientFeeError, BalanceError, InvalidContractError } from '../../errors';
 import { NetworkConfig } from '../../config/network';
+import { isContractWhitelisted } from '../../config/registry';
 
 export const SponsorRequestSchema = z.object({
   unbalancedTx: z.string().regex(/^[0-9a-fA-F]+$/, 'must be hex'),
@@ -20,7 +21,7 @@ export type SponsorResponse =
 export function createSponsorRouter(
   cfg: NetworkConfig,
   sponsor: SponsorWallet,
-  mutex: SponsorMutex,
+  mutex: ISponsorMutex,
 ): Router {
   const router = Router();
 
@@ -34,6 +35,11 @@ export function createSponsorRouter(
 
       // Deserialize the unbalanced transaction
       const tx = deserializeUnbalanced(parsed.data.unbalancedTx);
+
+      // Validate contract address against whitelist
+      if (tx.contractCall?.address && !isContractWhitelisted(tx.contractCall.address)) {
+        throw new InvalidContractError('Contract address is not whitelisted', { address: tx.contractCall.address });
+      }
 
       // Wait for wallet sync
       await waitForWalletSync(sponsor.wallet, cfg.walletSyncTimeoutMs);
