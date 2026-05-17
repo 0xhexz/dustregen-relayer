@@ -9,6 +9,7 @@ import { NetworkConfig } from '../../config/network';
 import { isContractWhitelisted } from '../../config/registry';
 import { DustMonitor } from '../../monitor/dust';
 import { RelayerMetrics } from '../metrics';
+import { computeDynamicFeeSafetyMargin } from '../../fees/dynamic-fee';
 
 export const SponsorRequestSchema = z.object({
   unbalancedTx: z.string().regex(/^[0-9a-fA-F]+$/, 'must be hex'),
@@ -17,7 +18,7 @@ export const SponsorRequestSchema = z.object({
 export type SponsorRequest = z.infer<typeof SponsorRequestSchema>;
 
 export type SponsorResponse =
-  | { ok: true; balancedTx: string; estimatedFee: string }
+  | { ok: true; balancedTx: string; estimatedFee: string; feeSafetyMargin: string }
   | { ok: false; error: { code: string; message: string; details?: unknown } };
 
 export function createSponsorRouter(
@@ -67,12 +68,20 @@ export function createSponsorRouter(
           );
         }
 
+        // Compute dynamic fee safety margin, falling back to static value on failure
+        let feeSafetyMargin: bigint;
+        try {
+          feeSafetyMargin = await computeDynamicFeeSafetyMargin(cfg.indexerUrl);
+        } catch {
+          feeSafetyMargin = cfg.additionalFeeOverhead;
+        }
+
         // Try to balance the transaction
         try {
           const balanced = await sponsor.wallet.balanceUnsealedTransaction(tx, {
             tokenKindsToBalance: ['dust'],
             changeOutputDestination: sponsor.publicKey,
-            additionalFeeOverhead: cfg.additionalFeeOverhead,
+            additionalFeeOverhead: feeSafetyMargin,
           });
 
           const balancedTx = balanced as any;
@@ -96,6 +105,7 @@ export function createSponsorRouter(
               estimatedFee: BigInt(estimatedFee),
             }),
             estimatedFee: estimatedFee.toString(),
+            feeSafetyMargin: feeSafetyMargin.toString(),
           };
         } catch (e) {
           if (e instanceof InsufficientFeeError || e instanceof InsufficientDUSTBalanceError) throw e;

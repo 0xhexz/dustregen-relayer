@@ -5,6 +5,7 @@ export interface NetworkConfig {
   readonly nodeRpcUrl: string;
   readonly indexerUrl: string;
   readonly indexerWsUrl: string;
+  /** @deprecated Use WASM-based ProvingProvider from @midnight-ntwrk/zkir-v2 instead */
   readonly proofServerUrl: string;
   readonly contractAddress: string;
   readonly sponsorSeed: string;

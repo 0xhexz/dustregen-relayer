@@ -1,6 +1,8 @@
 import { firstValueFrom, filter, timeout, throwError, Observable } from 'rxjs';
 import { WalletSyncTimeoutError, InsufficientDUSTBalanceError } from '../errors';
 import { NetworkConfig } from '../config/network';
+import { ProvingProvider } from './proving-provider';
+import { fastSyncSponsorWallet } from './fast-sync';
 
 // Types representing Midnight wallet interfaces (mocked in tests)
 export interface WalletState {
@@ -83,6 +85,8 @@ export async function buildSponsorWallet(cfg: NetworkConfig, deps?: {
   wallet: Wallet;
   publicKey: string;
   nativeAddress: string;
+  provingProvider?: ProvingProvider;
+  fastSync?: boolean;
 }): Promise<SponsorWallet> {
   if (deps) {
     // Testing/injection path
@@ -95,5 +99,11 @@ export async function buildSponsorWallet(cfg: NetworkConfig, deps?: {
   }
 
   // Production path - would use @midnight-ntwrk/wallet + @midnight-ntwrk/level-private-state-provider
+  // If fast-sync is enabled via env, sync wallet state from indexer before full initialization
+  const fastSyncEnabled = process.env.FAST_SYNC_ENABLED === 'true';
+  if (fastSyncEnabled) {
+    await fastSyncSponsorWallet(cfg.indexerUrl, cfg.contractAddress);
+  }
+
   throw new Error('Production wallet initialization requires @midnight-ntwrk/wallet and @midnight-ntwrk/level-private-state-provider');
 }
