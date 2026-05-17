@@ -1,6 +1,6 @@
-import { DustUtxoPool, UTXO_SPLIT_AMOUNT, PoolExhaustedError, UtxoRef } from '../wallet/utxo-pool';
-import { DustUtxoSplitter } from '../wallet/utxo-splitter';
-import { PoolAllocator } from '../queue/pool-allocator';
+import { DustUtxoPool, UTXO_SPLIT_AMOUNT, PoolExhaustedError, UtxoRef } from '../wallet/utxo-pool.js';
+import { DustUtxoSplitter } from '../wallet/utxo-splitter.js';
+import { PoolAllocator } from '../queue/pool-allocator.js';
 
 function createMockReplenishFn(count = 50): jest.Mock<Promise<UtxoRef[]>> {
   let callCount = 0;

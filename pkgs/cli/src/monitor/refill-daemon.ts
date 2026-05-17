@@ -1,8 +1,8 @@
-import { DustMonitor, computeRefillAmount, LOW_DUST_THRESHOLD_SPECKS, SPECKS_PER_DUST, STARS_PER_NIGHT } from './dust';
-import { sendWebhookAlert } from './webhooks';
-import { SponsorWallet } from '../wallet/sponsor';
-import { NetworkConfig } from '../config/network';
-import { Logger } from '../logger';
+import { DustMonitor, computeRefillAmount, LOW_DUST_THRESHOLD_SPECKS, SPECKS_PER_DUST, STARS_PER_NIGHT } from './dust.js';
+import { sendWebhookAlert } from './webhooks.js';
+import { SponsorWallet } from '../wallet/sponsor.js';
+import { NetworkConfig } from '../config/network.js';
+import { Logger } from '../logger.js';
 
 export interface DustRefillDaemonOpts {
   wallet: SponsorWallet;

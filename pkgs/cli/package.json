@@ -1,6 +1,7 @@
 {
   "name": "@dustregen/cli",
   "version": "1.0.0",
+  "type": "module",
   "description": "TypeScript CLI & Express Relayer Service for DustRegen",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

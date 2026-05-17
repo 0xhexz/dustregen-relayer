@@ -1,16 +1,16 @@
 import express, { Express } from 'express';
 import path from 'path';
 import cors from 'cors';
-import { createSponsorRouter } from './routes/sponsor';
-import { errorMiddleware } from './middleware';
-import { createIpRateLimiter, createAddressRateLimiter } from './rateLimit';
-import { SponsorWallet } from '../wallet/sponsor';
-import { ISponsorMutex, IPoolAllocator } from '../queue/mutex';
-import { DustMonitor } from '../monitor/dust';
-import { NetworkConfig } from '../config/network';
-import { RelayerMetrics } from './metrics';
+import { createSponsorRouter } from './routes/sponsor.js';
+import { errorMiddleware } from './middleware.js';
+import { createIpRateLimiter, createAddressRateLimiter } from './rateLimit.js';
+import { SponsorWallet } from '../wallet/sponsor.js';
+import { ISponsorMutex, IPoolAllocator } from '../queue/mutex.js';
+import { DustMonitor } from '../monitor/dust.js';
+import { NetworkConfig } from '../config/network.js';
+import { RelayerMetrics } from './metrics.js';
 
-export { RelayerMetrics } from './metrics';
+export { RelayerMetrics } from './metrics.js';
 
 export function createRelayerApp(
   cfg: NetworkConfig,

@@ -1,7 +1,7 @@
 import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
-import { NetworkConfig } from './network';
-import { ConfigurationError } from '../errors';
+import { NetworkConfig } from './network.js';
+import { ConfigurationError } from '../errors.js';
 
 /**
  * Load the sponsor key material based on the configured seed encryption mode.

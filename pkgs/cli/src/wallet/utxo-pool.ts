@@ -1,4 +1,4 @@
-import { RelayerError } from '../errors';
+import { RelayerError } from '../errors.js';
 
 /** Each pre-split UTXO is 0.1 DUST = 10^14 Specks */
 export const UTXO_SPLIT_AMOUNT = 100_000_000_000_000n;

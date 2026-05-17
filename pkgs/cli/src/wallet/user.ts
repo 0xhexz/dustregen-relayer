@@ -1,5 +1,5 @@
-import { NetworkConfig } from '../config/network';
-import { waitForWalletSync, Wallet, WalletState } from './sponsor';
+import { NetworkConfig } from '../config/network.js';
+import { waitForWalletSync, Wallet, WalletState } from './sponsor.js';
 
 export interface EphemeralUserWallet {
   readonly wallet: Wallet;

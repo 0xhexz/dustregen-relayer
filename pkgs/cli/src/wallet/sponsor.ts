@@ -1,8 +1,8 @@
 import { firstValueFrom, filter, timeout, throwError, Observable } from 'rxjs';
-import { WalletSyncTimeoutError, InsufficientDUSTBalanceError } from '../errors';
-import { NetworkConfig } from '../config/network';
-import { ProvingProvider } from './proving-provider';
-import { fastSyncSponsorWallet } from './fast-sync';
+import { WalletSyncTimeoutError, InsufficientDUSTBalanceError } from '../errors.js';
+import { NetworkConfig } from '../config/network.js';
+import { ProvingProvider } from './proving-provider.js';
+import { fastSyncSponsorWallet } from './fast-sync.js';
 
 // Types representing Midnight wallet interfaces (mocked in tests)
 export interface WalletState {

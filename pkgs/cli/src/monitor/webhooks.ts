@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { createLogger } from '../logger';
+import { createLogger } from '../logger.js';
 
 const logger = createLogger('webhooks');
 

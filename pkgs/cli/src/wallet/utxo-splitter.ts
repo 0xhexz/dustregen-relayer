@@ -1,4 +1,4 @@
-import { DustUtxoPool } from './utxo-pool';
+import { DustUtxoPool } from './utxo-pool.js';
 
 /** Default threshold below which replenishment is triggered */
 export const LOW_POOL_THRESHOLD = 10;

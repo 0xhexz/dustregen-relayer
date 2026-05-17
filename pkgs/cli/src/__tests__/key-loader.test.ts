@@ -1,7 +1,7 @@
 import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
-import { NetworkConfig } from '../config/network';
-import { loadSponsorKeyMaterial, encryptSeedWithPassphrase, decryptWithPassphrase } from '../config/key-loader';
+import { NetworkConfig } from '../config/network.js';
+import { loadSponsorKeyMaterial, encryptSeedWithPassphrase, decryptWithPassphrase } from '../config/key-loader.js';
 
 // Mock @clack/prompts
 jest.mock('@clack/prompts', () => ({

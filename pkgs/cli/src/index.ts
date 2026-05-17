@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { loadNetworkConfig } from './config/network';
-import { loadSponsorKeyMaterial } from './config/key-loader';
-import { buildSponsorWallet } from './wallet/sponsor';
-import { fastSyncSponsorWallet } from './wallet/fast-sync';
-import { createSponsorMutex } from './queue/mutex';
-import { DustUtxoPool, UTXO_SPLIT_AMOUNT, REPLENISH_COUNT } from './wallet/utxo-pool';
-import { DustUtxoSplitter } from './wallet/utxo-splitter';
-import { PoolAllocator } from './queue/pool-allocator';
-import { DustMonitor } from './monitor/dust';
-import { DustRefillDaemon } from './monitor/refill-daemon';
-import { createRelayerApp } from './relayer/server';
-import { runSimulatorFlow } from './simulator/flow';
-import { createLogger } from './logger';
-import { RelayerError } from './errors';
+import { loadNetworkConfig } from './config/network.js';
+import { loadSponsorKeyMaterial } from './config/key-loader.js';
+import { buildSponsorWallet } from './wallet/sponsor.js';
+import { fastSyncSponsorWallet } from './wallet/fast-sync.js';
+import { createSponsorMutex } from './queue/mutex.js';
+import { DustUtxoPool, UTXO_SPLIT_AMOUNT, REPLENISH_COUNT } from './wallet/utxo-pool.js';
+import { DustUtxoSplitter } from './wallet/utxo-splitter.js';
+import { PoolAllocator } from './queue/pool-allocator.js';
+import { DustMonitor } from './monitor/dust.js';
+import { DustRefillDaemon } from './monitor/refill-daemon.js';
+import { createRelayerApp } from './relayer/server.js';
+import { runSimulatorFlow } from './simulator/flow.js';
+import { createLogger } from './logger.js';
+import { RelayerError } from './errors.js';
 
 const program = new Command();
 
